@@ -1,0 +1,88 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'com.mygame'
+version '1.0'
+
+application {
+    applicationName = 'ProyectoVideojuegosJME'
+    mainClass = 'com.mygame.Main'
+    // Mac OS with LWJGL 3 needs to be started with this JVM argument
+    if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+        applicationDefaultJvmArgs = ['-XstartOnFirstThread']
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "https://jitpack.io" }
+}
+
+project.ext {
+  jmeVer = '3.8.1-stable'
+}
+
+project(":assets") {
+    apply plugin: "java"
+
+    buildDir = rootProject.file("build/assets")
+
+    sourceSets {
+        main {
+            resources {
+                srcDir '.'
+            }
+        }
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+}
+
+dependencies {
+    // Librerías base de jMonkeyEngine
+    implementation 'org.jmonkeyengine:jme3-core:3.7.0-beta1'
+    implementation 'org.jmonkeyengine:jme3-desktop:3.7.0-beta1'
+    implementation 'org.jmonkeyengine:jme3-lwjgl3:3.7.0-beta1'
+
+    // CAMBIO CRÍTICO: Usamos jbullet en lugar de bullet
+    // Esto evita que busque el archivo bulletjme.dll que te está dando error
+    implementation 'org.jmonkeyengine:jme3-jbullet:3.6.1-stable'
+
+    // NOTA: Asegúrate de que NO existan líneas que digan "jme3-bullet" o "jme3-bullet-native"
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': application.mainClass
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+wrapper {
+    gradleVersion = '8.6'
+}
+
+run {
+    jvmArgs = ["-Xms1024m", "-Xmx4096m", "-Xss2m"] 
+}
+
+sourceSets {
+    main {
+        resources {
+            // Esto le dice a Gradle: "Busca también dentro de la carpeta assets"
+            srcDirs += 'assets' 
+        }
+    }
+}

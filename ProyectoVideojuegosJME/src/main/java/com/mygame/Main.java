@@ -1,0 +1,63 @@
+package com.mygame;
+
+import com.jme3.app.SimpleApplication;
+import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.control.BetterCharacterControl;
+import com.jme3.math.Vector3f;
+import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
+
+/* Clase principal que orquesta la inicialización de las físicas, el escenario, el héroe y el ciclo de vida del juego. */
+public class Main extends SimpleApplication {
+
+    private Node NodoSoldado;
+    private Spatial ModeloLaberinto;
+    private BulletAppState EstadoFisicas;
+    private ManejoInputs EntradasJugador;
+
+    public static void main(String[] args) {
+        Main Aplicacion = new Main();
+        Aplicacion.start();
+    }
+
+    @Override
+    public void simpleInitApp() {
+        flyCam.setEnabled(false);
+        float relacionAspecto = (float) settings.getWidth() / settings.getHeight();
+        cam.setFrustumPerspective(45f, relacionAspecto, 0.1f, 1000f);
+        cam.setFrustumNear(0.1f);
+
+        EstadoFisicas = new BulletAppState();
+        stateManager.attach(EstadoFisicas);
+
+        ModeloLaberinto = assetManager.loadModel("Models/Laberinto.j3o");
+        ManejoFisicas.ConfigurarEscena(ModeloLaberinto, rootNode, EstadoFisicas, assetManager);
+
+        Spatial visualSoldado = assetManager.loadModel("Models/soldier.j3o");
+        NodoSoldado = ManejoFisicas.AplicarFisicasPersonaje(visualSoldado, rootNode, EstadoFisicas);
+
+        EntradasJugador = new ManejoInputs();
+        EntradasJugador.ConfigurarTeclado(inputManager);
+
+        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(5, 15, 5));
+
+        ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, false, false, EstadoFisicas.getPhysicsSpace());
+
+        setDisplayStatView(false);
+    }
+
+    @Override
+    public void simpleUpdate(float Tpf) {
+        Vector3f Direccion = EntradasJugador.ObtenerDireccion(cam);
+        NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(10f));
+
+        ControlCamara.ActualizarCamaraFisica(
+            cam, 
+            NodoSoldado, 
+            Tpf, 
+            EntradasJugador.getRotarIzquierda(), 
+            EntradasJugador.getRotarDerecha(),
+            EstadoFisicas.getPhysicsSpace()
+        );
+    }
+}
