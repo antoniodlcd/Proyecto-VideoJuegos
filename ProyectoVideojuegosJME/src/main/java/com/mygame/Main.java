@@ -39,7 +39,7 @@ public class Main extends SimpleApplication {
         EntradasJugador = new ManejoInputs();
         EntradasJugador.ConfigurarTeclado(inputManager);
 
-        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(5, 15, 5));
+        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(32, 15, 33));
 
         ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, false, false, EstadoFisicas.getPhysicsSpace());
 
