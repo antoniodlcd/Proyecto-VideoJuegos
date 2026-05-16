@@ -1,6 +1,7 @@
 package com.mygame;
 
 import com.jme3.asset.AssetManager;
+import com.jme3.bullet.control.BetterCharacterControl; // <-- NUEVO: Para saber hacia dónde mira el personaje
 import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
 import com.jme3.material.Material;
@@ -13,56 +14,55 @@ import com.jme3.scene.Node;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.shape.Line;
 
-/* Clase responsable de la lógica de combate, cálculo de impactos mediante Raycasting y generación de efectos visuales. */
 public class ManejoArmas {
 
-    // NUEVO: Ahora pedimos el AssetManager como parámetro para poder cargar el color del láser
     public static void DispararLaser(Camera Camara, Node NodoRaiz, Node NodoSoldado, AssetManager GestorRecursos) {
         
-        Vector3f Origen = Camara.getLocation();
-        Vector3f Direccion = Camara.getDirection();
+        // 1. ORIGEN: En lugar de la cámara, tomamos la posición del robot y le sumamos 1.5 en Y 
+        // para que el disparo salga de la altura del pecho/arma, y no desde los tobillos.
+        Vector3f Origen = NodoSoldado.getWorldTranslation().add(0, 1.5f, 0); 
         
-        // 1. CÁLCULO MATEMÁTICO DEL RAYO
+        // 2. DIRECCIÓN: Le preguntamos a las físicas del robot hacia dónde está mirando su pecho.
+        Vector3f Direccion = NodoSoldado.getControl(BetterCharacterControl.class).getViewDirection();
+        
+        
+        // CÁLCULO MATEMÁTICO DEL RAYO
         Ray RayoLaser = new Ray(Origen, Direccion);
         CollisionResults Resultados = new CollisionResults();
         NodoRaiz.collideWith(RayoLaser, Resultados);
 
-        // Determinamos dónde termina el rayo visualmente. 
-        // Si no golpea nada, lo extendemos a 100 unidades hacia adelante.
+        // Determinamos dónde termina el rayo visualmente (100 unidades hacia el frente del robot)
         Vector3f PuntoDestino = Origen.add(Direccion.mult(100f)); 
 
         if (Resultados.size() > 0) {
             CollisionResult GolpeMasCercano = Resultados.getClosestCollision();
             
+            // Filtro para ignorar colisiones con nuestro propio cuerpo
             if (!GolpeMasCercano.getGeometry().hasAncestor(NodoSoldado)) {
                 String NombreObjetivo = GolpeMasCercano.getGeometry().getName();
                 System.out.println("¡PUM! Impacto confirmado contra: " + NombreObjetivo);
                 
-                // Si golpeamos algo, el láser visual debe detenerse exactamente en el punto de contacto
+                // Cortamos la línea roja exactamente en la pared o enemigo que golpeamos
                 PuntoDestino = GolpeMasCercano.getContactPoint();
             }
         }
 
-        // 2. GENERACIÓN DEL EFECTO VISUAL (LA LÍNEA LÁSER)
-        // Creamos una forma geométrica de tipo línea que va desde la cámara hasta el punto de destino
+        // GENERACIÓN DEL EFECTO VISUAL (LA LÍNEA LÁSER)
         Line FormaLinea = new Line(Origen, PuntoDestino);
         Geometry GeoLaser = new Geometry("RayoVisual", FormaLinea);
         
-        // Le aplicamos un material "Unshaded" (sin sombras) para que brille intensamente de color rojo
         Material MatLaser = new Material(GestorRecursos, "Common/MatDefs/Misc/Unshaded.j3md");
         MatLaser.setColor("Color", ColorRGBA.Red);
         GeoLaser.setMaterial(MatLaser);
         
-        // 3. AUTODESTRUCCIÓN DEL LÁSER (Limpieza de memoria)
-        // Le añadimos un controlador personalizado a la línea geométrica
+        // AUTODESTRUCCIÓN DEL LÁSER
         GeoLaser.addControl(new AbstractControl() {
-            float TiempoDeVida = 0.1f; // El láser durará 0.1 segundos en pantalla
+            float TiempoDeVida = 0.1f; 
 
             @Override
             protected void controlUpdate(float Tpf) {
                 TiempoDeVida -= Tpf;
                 if (TiempoDeVida <= 0) {
-                    // Cuando el tiempo se agota, el láser se borra a sí mismo del mapa
                     spatial.removeFromParent(); 
                 }
             }
@@ -71,7 +71,6 @@ public class ManejoArmas {
             protected void controlRender(com.jme3.renderer.RenderManager rm, com.jme3.renderer.ViewPort vp) { }
         });
 
-        // Finalmente, adjuntamos la línea visual al mundo para que la cámara la pueda renderizar
         NodoRaiz.attachChild(GeoLaser);
     }
 }
