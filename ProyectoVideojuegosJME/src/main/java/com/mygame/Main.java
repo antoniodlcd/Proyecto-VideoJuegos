@@ -69,7 +69,7 @@ public class Main extends SimpleApplication {
             System.out.println("Error: No se encontro 'PuntoInicio', usando coordenadas por defecto");
             NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0, 20 ,0));
         }
-//        NodoSoldado.getControl(BetterCharacterControl.class).setViewDirection(new Vector3f(0, 0, -1));
+        NodoSoldado.getControl(BetterCharacterControl.class).setViewDirection(new Vector3f(0, 0, -1));
 
         ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, false, false, EstadoFisicas.getPhysicsSpace());
         //Insertamos Materiales  
