@@ -14,6 +14,9 @@ public class Main extends SimpleApplication {
     private Spatial ModeloLaberinto;
     private BulletAppState EstadoFisicas;
     private ManejoInputs EntradasJugador;
+    private float TiempoUltimoDisparo = 0f;
+    private final float CadenciaTiro = 0.5f;
+    
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -42,12 +45,25 @@ public class Main extends SimpleApplication {
         NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(32, 15, 33));
 
         ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, false, false, EstadoFisicas.getPhysicsSpace());
-
+        //Insertamos Materiales  
+        com.jme3.material.Material MatLaberinto = new com.jme3.material.Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        
+        //Cargamos texturas
+        com.jme3.texture.Texture TexturaPiedra = assetManager.loadTexture("Textures/Piedra.jpg");
+        
+        //Hacemos que la textura se repita
+        TexturaPiedra.setWrap(com.jme3.texture.Texture.WrapMode.Repeat);
+        
+        //Asignamos la textura como color principal
+        MatLaberinto.setTexture("DiffuseMap", TexturaPiedra);
+        
+        //Aplicamos el material
         setDisplayStatView(false);
     }
 
     @Override
     public void simpleUpdate(float Tpf) {
+        // --- LÓGICA DE MOVIMIENTO ---
         Vector3f Direccion = EntradasJugador.ObtenerDireccion(cam);
         NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(10f));
 
@@ -59,5 +75,17 @@ public class Main extends SimpleApplication {
             EntradasJugador.getRotarDerecha(),
             EstadoFisicas.getPhysicsSpace()
         );
+        
+        // Sumamos el tiempo que ha pasado desde el último frame (Tpf)
+        TiempoUltimoDisparo += Tpf;
+        
+        // Si el jugador hace clic Y ha pasado el tiempo suficiente desde el último disparo...
+        if (EntradasJugador.getDisparando() && TiempoUltimoDisparo >= CadenciaTiro) {
+            
+            // NUEVO: Agregamos assetManager como cuarto parámetro
+            ManejoArmas.DispararLaser(cam, rootNode, NodoSoldado, assetManager);
+            
+            TiempoUltimoDisparo = 0; 
+        }
     }
 }
