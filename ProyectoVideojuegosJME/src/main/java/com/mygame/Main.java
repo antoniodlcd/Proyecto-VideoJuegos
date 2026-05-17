@@ -3,6 +3,8 @@ package com.mygame;
 import com.jme3.app.SimpleApplication;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.control.BetterCharacterControl;
+import com.jme3.font.BitmapText;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
@@ -12,6 +14,7 @@ import com.jme3.system.AppSettings;
 /* Clase principal que orquesta la inicialización de las físicas, el escenario, el héroe y el ciclo de vida del juego. */
 public class Main extends SimpleApplication {
 
+    private boolean cursorBloquedo = false;
     private Node NodoSoldado;
     private Spatial ModeloLaberinto;
     private BulletAppState EstadoFisicas;
@@ -28,7 +31,7 @@ public class Main extends SimpleApplication {
         AppSettings Ajustes = new AppSettings(true);
         Ajustes.setResolution(1280, 720);
         Ajustes.setVSync(true);
-        Ajustes.setFullscreen(true);
+        Ajustes.setFullscreen(false);
         
         Aplicacion.setSettings(Ajustes);
         Aplicacion.start();
@@ -38,6 +41,11 @@ public class Main extends SimpleApplication {
     public void simpleInitApp() {
         flyCam.setEnabled(false);
         flyCam.setMoveSpeed(20f);
+        flyCam.unregisterInput();
+        
+//        inputManager.setCursorVisible(false); // ocultar el cursor
+//        getContext().getMouseInput().setCursorVisible(false);
+        
         
         float relacionAspecto = (float) settings.getWidth() / settings.getHeight();
         cam.setFrustumPerspective(45f, relacionAspecto, 0.1f, 1000f);
@@ -56,6 +64,7 @@ public class Main extends SimpleApplication {
 
         EntradasJugador = new ManejoInputs();
         EntradasJugador.ConfigurarTeclado(inputManager);
+        
 
 //        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(32, 2, 33));
 ////        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0,400, 500));
@@ -71,7 +80,7 @@ public class Main extends SimpleApplication {
         }
         NodoSoldado.getControl(BetterCharacterControl.class).setViewDirection(new Vector3f(0, 0, -1));
 
-        ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, false, false, EstadoFisicas.getPhysicsSpace());
+        ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, 0f, 0f, EstadoFisicas.getPhysicsSpace());
         //Insertamos Materiales  
         com.jme3.material.Material MatLaberinto = new com.jme3.material.Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         
@@ -84,6 +93,8 @@ public class Main extends SimpleApplication {
         //Asignamos la textura como color principal
         MatLaberinto.setTexture("DiffuseMap", TexturaPiedra);
         
+        ConfigurarMirilla();
+        
         //Aplicamos el material
         setDisplayStatView(false);
     }
@@ -92,18 +103,20 @@ public class Main extends SimpleApplication {
     public void simpleUpdate(float Tpf) {
         TpfActual = Tpf; // guardar el tiempo del fotograma
         
+        // ocultamos el cursor cuando la ventana ya existe
+        if (!cursorBloquedo) {
+            inputManager.setCursorVisible(false);
+            cursorBloquedo = true;
+        }
+        
         // --- LÓGICA DE MOVIMIENTO ---
         Vector3f Direccion = EntradasJugador.ObtenerDireccion(cam);
         NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(10f));
 
-//        ControlCamara.ActualizarCamaraFisica(
-//            cam, 
-//            NodoSoldado, 
-//            Tpf, 
-//            EntradasJugador.getRotarIzquierda(), 
-//            EntradasJugador.getRotarDerecha(),
-//            EstadoFisicas.getPhysicsSpace()
-//        );
+        Vector3f DireccionVista = cam.getDirection().clone();
+        DireccionVista.setY(0);
+        DireccionVista.normalizeLocal();
+        NodoSoldado.getControl(BetterCharacterControl.class).setViewDirection(DireccionVista);
         
         // Sumamos el tiempo que ha pasado desde el último frame (Tpf)
         TiempoUltimoDisparo += Tpf;
@@ -122,8 +135,8 @@ public class Main extends SimpleApplication {
             cam, 
             NodoSoldado, 
             TpfActual, 
-            EntradasJugador.getRotarIzquierda(), 
-            EntradasJugador.getRotarDerecha(),
+            EntradasJugador.getGiroX(), 
+            EntradasJugador.getGiroY(),
             EstadoFisicas.getPhysicsSpace()
         );
     }
@@ -144,5 +157,23 @@ public class Main extends SimpleApplication {
             }
         }
         return null;
+    }
+    
+    // metodo para dibujar mira
+    private void ConfigurarMirilla() {
+        BitmapText Mirilla = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt")); // fuente por defecto
+        
+        // configurar simbolo y tamaño del simbolo
+        Mirilla.setText("+");
+        Mirilla.setSize(Mirilla.getFont().getCharSet().getRenderedSize() * 2);
+        Mirilla.setColor(ColorRGBA.White);
+        
+        // colocar al centro de la pantalla
+        float MitadAncho = (settings.getWidth() / 2f) - (Mirilla.getLineWidth() / 2f);
+        float MitadAlto = (settings.getHeight()/ 2f) + (Mirilla.getLineHeight() / 2f);
+        Mirilla.setLocalTranslation(MitadAncho, MitadAlto + 150, 0);
+        
+        
+        guiNode.attachChild(Mirilla); // aisgnarla al guiNode
     }
 }
