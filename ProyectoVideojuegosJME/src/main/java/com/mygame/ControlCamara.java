@@ -11,24 +11,32 @@ import java.util.List;
 /* Clase encargada de gestionar el comportamiento de la cámara orbital, incluyendo la rotación y la detección de colisiones con el entorno. */
 public class ControlCamara {
 
-    private static float AnguloActual = 0; 
-    private static final float RadioMaximo = 8.0f; 
-    private static final float AlturaIdeal = 5.5f; 
-    private static final float VelocidadRotacion = 2.5f;
-    private static final float MargenSeguridad = 0.8f; 
+    private static float AnguloHorizontal = 0;
+    private static float AnguloVertical = 0.2f; // inicia ligeramente inclinada hacia abajo
+    private static final float RADIO_MAXIMO = 15.0f; 
+    private static final float ALTURA_IDEAL = 5.5f; 
+    private static final float VELOCIDAD_ROTACION = 3.5f;
+    private static final float MARGEN_SEGURIDAD = 0.8f; 
 
-    public static void ActualizarCamaraFisica(Camera Cam, Spatial Personaje, float Tpf, boolean Izq, boolean Der, PhysicsSpace EspacioFisico) {
+    public static void ActualizarCamaraFisica(Camera Cam, Spatial Personaje, float Tpf, float deltaX, float deltaY, PhysicsSpace EspacioFisico) {
         if (Personaje == null) return;
 
-        if (Izq) AnguloActual += VelocidadRotacion * Tpf;
-        if (Der) AnguloActual -= VelocidadRotacion * Tpf;
+        // sumar el movimiento del raton
+        AnguloHorizontal -= deltaX * VELOCIDAD_ROTACION;
+        AnguloVertical -= deltaY * VELOCIDAD_ROTACION;
+        
+        // evita que la camara de volteretas
+        AnguloVertical = FastMath.clamp(AnguloVertical, -0.2f, FastMath.HALF_PI - 0.1f);
 
         Vector3f PosCabeza = Personaje.getWorldTranslation().add(0, 1.8f, 0); 
-
-        float X_Ideal = PosCabeza.x + RadioMaximo * FastMath.sin(AnguloActual);
-        float Z_Ideal = PosCabeza.z + RadioMaximo * FastMath.cos(AnguloActual);
         
-        Vector3f PosicionIdeal = new Vector3f(X_Ideal, PosCabeza.y + (AlturaIdeal - 1.8f), Z_Ideal);
+        float DistanciaProyectadaXZ = RADIO_MAXIMO * FastMath.cos(AnguloVertical);
+
+        float X_Ideal = PosCabeza.x + DistanciaProyectadaXZ * FastMath.sin(AnguloHorizontal);
+        float Z_Ideal = PosCabeza.z + DistanciaProyectadaXZ * FastMath.cos(AnguloHorizontal);
+        float Y_Ideal = PosCabeza.y + RADIO_MAXIMO * FastMath.sin(AnguloVertical);
+        
+        Vector3f PosicionIdeal = new Vector3f(X_Ideal, Y_Ideal, Z_Ideal);
 
         List<PhysicsRayTestResult> Resultados = EspacioFisico.rayTest(PosCabeza, PosicionIdeal);
         
@@ -47,7 +55,7 @@ public class ControlCamara {
             float DistanciaTotal = DireccionRayo.length();
             DireccionRayo.normalizeLocal();
 
-            float DistanciaSegura = (DistanciaTotal * FraccionMasCercana) - MargenSeguridad;
+            float DistanciaSegura = (DistanciaTotal * FraccionMasCercana) - MARGEN_SEGURIDAD;
             if (DistanciaSegura < 1.5f) DistanciaSegura = 1.5f; 
 
             PosicionFinal = PosCabeza.add(DireccionRayo.mult(DistanciaSegura));
