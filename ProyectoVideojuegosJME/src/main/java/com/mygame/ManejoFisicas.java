@@ -28,13 +28,25 @@ public class ManejoFisicas {
         Estado.getPhysicsSpace().add(FisicoLaberinto);
         
         Estado.setDebugEnabled(false);
+        // 1. LUZ PRINCIPAL 
+        DirectionalLight LuzPrincipal = new DirectionalLight();
+        // Apunta hacia abajo y hacia la izquierda
+        LuzPrincipal.setDirection(new Vector3f(-0.5f, -0.5f, -0.5f).normalizeLocal());
+        LuzPrincipal.setColor(ColorRGBA.White.mult(0.8f)); 
+        NodoRaiz.addLight(LuzPrincipal);
 
-        DirectionalLight Sol = new DirectionalLight();
-        Sol.setDirection(new Vector3f(-0.5f, -0.5f, -0.5f).normalizeLocal());
-        NodoRaiz.addLight(Sol);
+        // 2.LUZ DE RELLENO (Simula el rebote de luz para quitar las paredes negras)
+        DirectionalLight LuzRelleno = new DirectionalLight();
+        // Apunta en la dirección exactamente opuesta a la principal (hacia arriba y a la derecha)
+        LuzRelleno.setDirection(new Vector3f(0.5f, 0.5f, 0.5f).normalizeLocal());
+        // Le damos una intensidad menor para que las sombras se vean grises, no iluminadas por completo
+        LuzRelleno.setColor(ColorRGBA.White.mult(0.4f)); 
+        NodoRaiz.addLight(LuzRelleno);
 
+        // 3. LUZ AMBIENTAL BASE (Mantiene un nivel mínimo global de iluminación)
         AmbientLight LuzAmbiente = new AmbientLight();
-        LuzAmbiente.setColor(ColorRGBA.White.mult(0.6f));
+        // Subimos ligeramente el valor a 0.3f
+        LuzAmbiente.setColor(ColorRGBA.White.mult(0.3f));
         NodoRaiz.addLight(LuzAmbiente);
     }
 

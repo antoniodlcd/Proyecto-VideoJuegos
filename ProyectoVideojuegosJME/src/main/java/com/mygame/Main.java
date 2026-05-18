@@ -10,6 +10,7 @@ import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
+import com.jme3.light.PointLight;
 
 /* Clase principal que orquesta la inicialización de las físicas, el escenario, el héroe y el ciclo de vida del juego. */
 public class Main extends SimpleApplication {
@@ -22,6 +23,7 @@ public class Main extends SimpleApplication {
     private float TiempoUltimoDisparo = 0f;
     private float TpfActual = 0f; // nueva declaracion de variable global
     private final float CadenciaTiro = 0.5f;
+    
     
 
     public static void main(String[] args) {
@@ -80,6 +82,13 @@ public class Main extends SimpleApplication {
         }
         NodoSoldado.getControl(BetterCharacterControl.class).setViewDirection(new Vector3f(0, 0, -1));
 
+        // --- Nueva Linterna Adaptada a la escala ---
+        PointLight Linterna = new PointLight();
+        Linterna.setColor(ColorRGBA.White.mult(1.5f));
+        Linterna.setRadius(80f);
+        //Adjuntamos la luz al personaje
+        NodoSoldado.addLight(Linterna);
+     
         ControlCamara.ActualizarCamaraFisica(cam, NodoSoldado, 0, 0f, 0f, EstadoFisicas.getPhysicsSpace());
         //Insertamos Materiales  
         com.jme3.material.Material MatLaberinto = new com.jme3.material.Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
