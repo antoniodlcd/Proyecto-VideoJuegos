@@ -12,7 +12,7 @@ import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.control.AbstractControl;
-import com.jme3.scene.shape.Line;
+import com.jme3.scene.shape.Cylinder; // nuevo para hacer mas visible el disparo
 
 public class ManejoArmas {
 
@@ -33,7 +33,30 @@ public class ManejoArmas {
 
         // Determinamos dónde termina el rayo visualmente (100 unidades hacia el frente del robot)
         Vector3f PuntoDestino = Origen.add(Direccion.mult(100f)); 
+        
 
+        // --- NUEVA GENERACIÓN DEL LÁSER (USANDO UN CILINDRO 3D) --
+        // 1. Calculamos la distancia exacta entre el arma y la pared para saber qué tan largo será 
+        float DistanciaLaser = Origen.distance(PuntoDestino);
+        
+        // 2. Creamos un Cilindro 
+        // Un radio de 0.05f nos dará un láser delgado pero tridimensional y sólido.
+        Cylinder FormaCilindro = new Cylinder(8, 8, 0.07f, DistanciaLaser, true);
+        Geometry GeoLaser = new Geometry("RayoVisual", FormaCilindro);
+        
+        // 3. Posicionamiento: A diferencia de la línea, el cilindro se crea desde su centro.
+        // Así que encontramos el punto medio exacto entre el robot y la pared.
+        Vector3f PuntoMedio = Origen.clone().interpolateLocal(PuntoDestino, 0.5f);
+        GeoLaser.setLocalTranslation(PuntoMedio);
+        
+        // 4. Rotación: Hacemos que el cilindro apunte exactamente hacia donde disparamos
+        GeoLaser.lookAt(PuntoDestino, Vector3f.UNIT_Y);
+
+        Material MatLaser = new Material(GestorRecursos, "Common/MatDefs/Misc/Unshaded.j3md");
+        MatLaser.setColor("Color", ColorRGBA.Red);
+        GeoLaser.setMaterial(MatLaser);
+        
+        
         if (Resultados.size() > 0) {
             CollisionResult GolpeMasCercano = Resultados.getClosestCollision();
             
@@ -43,17 +66,10 @@ public class ManejoArmas {
                 System.out.println("¡PUM! Impacto confirmado contra: " + NombreObjetivo);
                 
                 // Cortamos la línea roja exactamente en la pared o enemigo que golpeamos
-                PuntoDestino = GolpeMasCercano.getContactPoint();
+                //PuntoDestino = GolpeMasCercano.getContactPoint();
             }
         }
 
-        // GENERACIÓN DEL EFECTO VISUAL (LA LÍNEA LÁSER)
-        Line FormaLinea = new Line(Origen, PuntoDestino);
-        Geometry GeoLaser = new Geometry("RayoVisual", FormaLinea);
-        
-        Material MatLaser = new Material(GestorRecursos, "Common/MatDefs/Misc/Unshaded.j3md");
-        MatLaser.setColor("Color", ColorRGBA.Red);
-        GeoLaser.setMaterial(MatLaser);
         
         // AUTODESTRUCCIÓN DEL LÁSER
         GeoLaser.addControl(new AbstractControl() {
