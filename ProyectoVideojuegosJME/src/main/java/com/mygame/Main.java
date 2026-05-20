@@ -23,8 +23,10 @@ public class Main extends SimpleApplication {
     private float TiempoUltimoDisparo = 0f;
     private float TpfActual = 0f; // nueva declaracion de variable global
     private final float CadenciaTiro = 0.5f;
-    
-    
+    private Spatial arania;
+    private Spatial En_Tanque;
+    private BitmapText textoContador;
+    private java.util.ArrayList<Spatial> ListaVillanos = new java.util.ArrayList<>();
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -47,7 +49,13 @@ public class Main extends SimpleApplication {
         
 //        inputManager.setCursorVisible(false); // ocultar el cursor
 //        getContext().getMouseInput().setCursorVisible(false);
-        
+        // Inicializar el objeto de texto para la pantalla
+        textoContador = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoContador.setSize(30);
+        textoContador.setColor(ColorRGBA.Red);
+        textoContador.setLocalTranslation(20, settings.getHeight() - 20, 0); 
+
+        guiNode.attachChild(textoContador);
         
         float relacionAspecto = (float) settings.getWidth() / settings.getHeight();
         cam.setFrustumPerspective(45f, relacionAspecto, 0.1f, 1000f);
@@ -63,7 +71,61 @@ public class Main extends SimpleApplication {
 
         Spatial visualSoldado = assetManager.loadModel("Models/soldier.j3o");
         NodoSoldado = ManejoFisicas.AplicarFisicasPersonaje(visualSoldado, rootNode, EstadoFisicas);
+        
+        // =====================================================================
+        // PRIMERO: Buscamos el punto de inicio del mapa en Blender
+        // =====================================================================
+        Spatial MarcadorInicio = EncontrarNodo(ModeloLaberinto, "PuntoInicio"); 
+        
+        if (MarcadorInicio != null) {
+            Vector3f CoordenadaInicio = MarcadorInicio.getWorldTranslation();
+            NodoSoldado.getControl(BetterCharacterControl.class).warp(CoordenadaInicio.add(0, 1.5f, 0)); 
+            System.out.println("Personaje posicionado automaticamente en: " + CoordenadaInicio);
+        } else {
+            System.out.println("Error: No se encontro 'PuntoInicio', usando coordenadas por defecto");
+            NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0, 20 ,0));
+        }
 
+        // =====================================================================
+        // SEGUNDO: Ahora que 'MarcadorInicio' existe, creamos los 10 villanos
+        // =====================================================================
+        Spatial modeloAraniaBase = assetManager.loadModel("Models/arania.j3o");
+        Spatial modeloTanqueBase = assetManager.loadModel("Models/En_Tanque.j3o");
+
+        Vector3f posInicioHeroe = new Vector3f(0, 2, 0);
+        if (MarcadorInicio != null) {
+            posInicioHeroe = MarcadorInicio.getWorldTranslation();
+        }
+
+        Vector3f[] puntosSpawn = new Vector3f[]{
+            posInicioHeroe.add(15f, 2.5f, 15f),   posInicioHeroe.add(-20f, 2.5f, 30f),
+            posInicioHeroe.add(35f, 2.5f, -15f),  posInicioHeroe.add(-15f, 2.5f, -35f),
+            posInicioHeroe.add(45f, 2.5f, 10f),   posInicioHeroe.add(-30f, 2.5f, 20f),
+            posInicioHeroe.add(20f, 2.5f, -25f),  posInicioHeroe.add(55f, 2.5f, -45f),
+            posInicioHeroe.add(-40f, 2.5f, 5f),   posInicioHeroe.add(10f, 2.5f, 40f)
+        };
+
+        for (int i = 0; i < 10; i++) {
+            Spatial clonEnemigo;
+            
+            if (i % 2 == 0) {
+                clonEnemigo = modeloAraniaBase.clone();
+                clonEnemigo.setName("Arania");
+            } else {
+                clonEnemigo = modeloTanqueBase.clone();
+                clonEnemigo.setName("Tanque");
+            }
+
+            BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
+            clonEnemigo.addControl(fisicasE);
+            
+            rootNode.attachChild(clonEnemigo);
+            EstadoFisicas.getPhysicsSpace().add(fisicasE);
+            
+            fisicasE.warp(puntosSpawn[i]);
+            ListaVillanos.add(clonEnemigo);
+        }
+        
         EntradasJugador = new ManejoInputs();
         EntradasJugador.ConfigurarTeclado(inputManager);
         
@@ -71,7 +133,6 @@ public class Main extends SimpleApplication {
 //        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(32, 2, 33));
 ////        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0,400, 500));
 
-        Spatial MarcadorInicio = EncontrarNodo(ModeloLaberinto, "PuntoInicio"); // encontrar el punto de inicsssio del mapa
         if (MarcadorInicio != null) {
             Vector3f CoordenadaInicio = MarcadorInicio.getWorldTranslation();
             NodoSoldado.getControl(BetterCharacterControl.class).warp(CoordenadaInicio.add(0, 1.5f, 0)); // spawnear el soldado en el inicio
@@ -120,7 +181,7 @@ public class Main extends SimpleApplication {
         
         // --- LÓGICA DE MOVIMIENTO ---
         Vector3f Direccion = EntradasJugador.ObtenerDireccion(cam);
-        NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(10f));
+        NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(30f));
 
         Vector3f DireccionVista = cam.getDirection().clone();
         DireccionVista.setY(0);
@@ -136,6 +197,8 @@ public class Main extends SimpleApplication {
             ManejoArmas.DispararLaser(cam, rootNode, NodoSoldado, assetManager);
             TiempoUltimoDisparo = 0; 
         }
+        
+        IAVillanos.PerseguirHeroe(NodoSoldado, ListaVillanos, Tpf);
     }
 
     @Override
