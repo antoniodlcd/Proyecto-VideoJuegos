@@ -58,9 +58,38 @@ public class ManejoArmas {
         MatLaser.setColor("Color", ColorRGBA.Red);
         GeoLaser.setMaterial(MatLaser);
         
-        if (ObjetoGolpeado != null) {
-            // ¡Más adelante aquí pondremos la lógica de restar vida!
-            System.out.println("¡Impacto físico contra: " + ObjetoGolpeado.getName() + "!");
+    if (ObjetoGolpeado != null) {
+            
+            // 1. Intentamos leer la "nota adhesiva" de Vida del objeto que golpeamos
+            Integer vidaActual = ObjetoGolpeado.getUserData("Vida");
+            
+            // 2. Si vidaActual no es nulo, significa que le disparamos a un enemigo (y no a la pared)
+            if (vidaActual != null) {
+                
+                // Restamos 25 puntos (Se necesitan 4 disparos para matar a un enemigo de 100 de vida)
+                vidaActual -= 25; 
+                
+                if (vidaActual <= 0) {
+                    System.out.println("¡" + ObjetoGolpeado.getName() + " ha sido DESTRUIDO!");
+                    
+                    // MUERTE: Lo borramos visualmente de la pantalla
+                    ObjetoGolpeado.removeFromParent(); 
+                    
+                    // MUERTE: Lo borramos del motor de físicas para que su colisión invisible desaparezca
+                    BetterCharacterControl controlFisico = ObjetoGolpeado.getControl(BetterCharacterControl.class);
+                    if (controlFisico != null) {
+                        EspacioFisico.remove(controlFisico);
+                    }
+                    
+                } else {
+                    // Si sobrevive al disparo, imprimimos la vida restante y actualizamos su nota adhesiva
+                    System.out.println("Impacto a " + ObjetoGolpeado.getName() + ". Vida restante: " + vidaActual);
+                    ObjetoGolpeado.setUserData("Vida", vidaActual);
+                }
+            } else {
+                // Si la variable vidaActual es nula, el láser chocó contra una pared del laberinto
+                System.out.println("El láser chocó contra el entorno.");
+            }
         }
         
         GeoLaser.addControl(new AbstractControl() {

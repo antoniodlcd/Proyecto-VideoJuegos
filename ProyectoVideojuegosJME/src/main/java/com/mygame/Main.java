@@ -130,7 +130,6 @@ public class Main extends SimpleApplication {
                 
                 // Movemos solo el dibujo del Tanque hacia arriba dentro del contenedor.
                 // 1.2f es un valor aproximado, puedes subirlo 
-                // hasta que sus ruedas toquen el suelo perfectamente.
                 visualEnemigo.setLocalTranslation(0, 1.2f, 0); 
             }
 
@@ -140,6 +139,7 @@ public class Main extends SimpleApplication {
             // Le pegamos los puntos de vida al Nodo contenedor
             NodoEnemigo.setUserData("Vida", 100);
 
+            
             // Las físicas ahora controlan al Nodo, no al dibujo
             BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
             NodoEnemigo.addControl(fisicasE);
