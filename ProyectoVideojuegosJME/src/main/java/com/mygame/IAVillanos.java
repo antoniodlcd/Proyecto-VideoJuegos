@@ -24,22 +24,35 @@ public class IAVillanos {
         
     }
 
-    private static void MoverEnemigo(Spatial Enemigo, Vector3f Objetivo, float Velocidad) {
-        // 1. Obtener el control de físicas que tiene asignado el enemigo
+ private static void MoverEnemigo(Spatial Enemigo, Vector3f Objetivo, float Velocidad) {
         BetterCharacterControl fisiscasEnemigo = Enemigo.getControl(BetterCharacterControl.class);
         
         if (fisiscasEnemigo != null) {
-            // 2. Calcular la dirección hacia el héroe
-            Vector3f Direccion = Objetivo.subtract(Enemigo.getWorldTranslation()).normalizeLocal();
+            Vector3f Direccion = Objetivo.subtract(Enemigo.getWorldTranslation());
             Direccion.setY(0); // Mantener el movimiento en el suelo
 
-            // 3. Rotar el modelo para que mire al héroe
-            Enemigo.lookAt(Objetivo, Vector3f.UNIT_Y);
-
-            // 4. LA CLAVE: En lugar de usar Enemigo.move(), le damos la velocidad al motor de físicas
-            // BetterCharacterControl ya multiplica internamente por el Tpf, así que no hace falta pasarlo aquí
-            Vector3f VectorMovimiento = Direccion.mult(Velocidad);
-            fisiscasEnemigo.setWalkDirection(VectorMovimiento);
+            // Medimos a qué distancia exacta se encuentra este enemigo del jugador
+            float DistanciaAlHeroe = Direccion.length();
+            
+            // Esto asegura que no se encimen y destruyan el rendimiento de las físicas.
+            if (DistanciaAlHeroe > 4.0f) {
+                
+                // Si están lejos, normalizamos para obtener solo la dirección y caminamos
+                Direccion.normalizeLocal();
+                fisiscasEnemigo.setViewDirection(Direccion);
+                fisiscasEnemigo.setWalkDirection(Direccion.mult(Velocidad));
+                
+            } else {
+                // Si ya llegaron al perímetro seguro de 4 metros, se detienen
+                fisiscasEnemigo.setWalkDirection(Vector3f.ZERO);
+                
+                // Opcional: Hacemos que, aunque estén detenidos, sigan girando para mirar 
+                // al jugador de forma segura 
+                if (DistanciaAlHeroe > 0.1f) {
+                    Direccion.normalizeLocal();
+                    fisiscasEnemigo.setViewDirection(Direccion);
+                }
+            }
         }
     }
 }

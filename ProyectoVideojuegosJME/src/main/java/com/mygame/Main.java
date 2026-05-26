@@ -87,43 +87,71 @@ public class Main extends SimpleApplication {
         }
 
         // =====================================================================
-        // SEGUNDO: Ahora que 'MarcadorInicio' existe, creamos los 10 villanos
+        // SPAWN ALEATORIO Y SEGURO DE VILLANOS
         // =====================================================================
         Spatial modeloAraniaBase = assetManager.loadModel("Models/arania.j3o");
         Spatial modeloTanqueBase = assetManager.loadModel("Models/En_Tanque.j3o");
 
-        Vector3f posInicioHeroe = new Vector3f(0, 2, 0);
-        if (MarcadorInicio != null) {
-            posInicioHeroe = MarcadorInicio.getWorldTranslation();
-        }
+        // 1. Creamos una lista con todos los puntos seguros que recolectaste (puedes agregar más si quieres)
+        java.util.ArrayList<Vector3f> PoolDeSpawns = new java.util.ArrayList<>();
+        PoolDeSpawns.add(new Vector3f(14.43f, 2.5f, 378.24f));
+        PoolDeSpawns.add(new Vector3f(12.29f, 2.5f, 285.62f));
+        PoolDeSpawns.add(new Vector3f(11.50f, 2.5f, 270.16f));
+        PoolDeSpawns.add(new Vector3f(-40.95f, 2.5f, 191.44f));
+        PoolDeSpawns.add(new Vector3f(-62.91f, 2.5f, 191.77f));
+        PoolDeSpawns.add(new Vector3f(-258.61f, 2.5f, 192.83f));
+        PoolDeSpawns.add(new Vector3f(-310.77f, 2.5f, 202.06f));
+        PoolDeSpawns.add(new Vector3f(-327.76f, 2.5f, 260.86f));
+        PoolDeSpawns.add(new Vector3f(-338.89f, 2.5f, 185.40f));
+        PoolDeSpawns.add(new Vector3f(-428.48f, 2.5f, 88.78f));
+        
+        // 2. MAGIA: Revolvemos la lista al azar como si fuera una baraja de cartas
+        java.util.Collections.shuffle(PoolDeSpawns);
 
-        Vector3f[] puntosSpawn = new Vector3f[]{
-            posInicioHeroe.add(15f, 2.5f, 15f),   posInicioHeroe.add(-20f, 2.5f, 30f),
-            posInicioHeroe.add(35f, 2.5f, -15f),  posInicioHeroe.add(-15f, 2.5f, -35f),
-            posInicioHeroe.add(45f, 2.5f, 10f),   posInicioHeroe.add(-30f, 2.5f, 20f),
-            posInicioHeroe.add(20f, 2.5f, -25f),  posInicioHeroe.add(55f, 2.5f, -45f),
-            posInicioHeroe.add(-40f, 2.5f, 5f),   posInicioHeroe.add(10f, 2.5f, 40f)
-        };
-
+        // 3. Tomamos los primeros 10 lugares de la lista ya revuelta
         for (int i = 0; i < 10; i++) {
-            Spatial clonEnemigo;
+            
+            // Creamos un contenedor vacío. Este Nodo será el verdadero enemigo para el motor.
+            Node NodoEnemigo = new Node(); 
+            Spatial visualEnemigo;
             
             if (i % 2 == 0) {
-                clonEnemigo = modeloAraniaBase.clone();
-                clonEnemigo.setName("Arania");
+                // Instanciamos la Araña
+                visualEnemigo = modeloAraniaBase.clone();
+                NodoEnemigo.setName("Arania");
+                
+                // La araña está bien posicionada, la dejamos en el origen del Nodo (0,0,0)
+                visualEnemigo.setLocalTranslation(0, 0f, 0); 
+                
             } else {
-                clonEnemigo = modeloTanqueBase.clone();
-                clonEnemigo.setName("Tanque");
+                // Instanciamos el Tanque
+                visualEnemigo = modeloTanqueBase.clone();
+                NodoEnemigo.setName("Tanque");
+                
+                // Movemos solo el dibujo del Tanque hacia arriba dentro del contenedor.
+                // 1.2f es un valor aproximado, puedes subirlo 
+                // hasta que sus ruedas toquen el suelo perfectamente.
+                visualEnemigo.setLocalTranslation(0, 1.2f, 0); 
             }
 
-            BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
-            clonEnemigo.addControl(fisicasE);
+            // Metemos el dibujo visual dentro del Nodo contenedor
+            NodoEnemigo.attachChild(visualEnemigo);
             
-            rootNode.attachChild(clonEnemigo);
+            // Le pegamos los puntos de vida al Nodo contenedor
+            NodoEnemigo.setUserData("Vida", 100);
+
+            // Las físicas ahora controlan al Nodo, no al dibujo
+            BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
+            NodoEnemigo.addControl(fisicasE);
+            
+            rootNode.attachChild(NodoEnemigo);
             EstadoFisicas.getPhysicsSpace().add(fisicasE);
             
-            fisicasE.warp(puntosSpawn[i]);
-            ListaVillanos.add(clonEnemigo);
+            // Asignamos el punto aleatorio seguro
+            fisicasE.warp(PoolDeSpawns.get(i));
+            
+            // Agregamos el Nodo a la lista de persecución
+            ListaVillanos.add(NodoEnemigo); 
         }
         
         EntradasJugador = new ManejoInputs();
@@ -146,7 +174,7 @@ public class Main extends SimpleApplication {
         // --- Nueva Linterna Adaptada a la escala ---
         PointLight Linterna = new PointLight();
         Linterna.setColor(ColorRGBA.White.mult(1.5f));
-        Linterna.setRadius(80f);
+        Linterna.setRadius(40f);
         //Adjuntamos la luz al personaje
         NodoSoldado.addLight(Linterna);
      
@@ -193,8 +221,12 @@ public class Main extends SimpleApplication {
         
         // Si el jugador hace clic Y ha pasado el tiempo suficiente desde el último disparo...
         if (EntradasJugador.getDisparando() && TiempoUltimoDisparo >= CadenciaTiro) {
-            // NUEVO: Agregamos assetManager como cuarto parámetro
-            ManejoArmas.DispararLaser(cam, rootNode, NodoSoldado, assetManager);
+            
+            // Imprime tu posición exacta en la consola para usarla como Spawn
+            System.out.println("Posición segura para enemigo: " + NodoSoldado.getWorldTranslation());
+
+            // NUEVO LLAMADO AL DISPARO CON FÍSICAS
+            ManejoArmas.DispararLaser(cam, EstadoFisicas.getPhysicsSpace(), NodoSoldado, assetManager, rootNode);
             TiempoUltimoDisparo = 0; 
         }
         
