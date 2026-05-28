@@ -26,7 +26,12 @@ public class Main extends SimpleApplication {
     private Spatial arania;
     private Spatial En_Tanque;
     private BitmapText textoContador;
+    private int villanosRestantes = 0;
     private java.util.ArrayList<Spatial> ListaVillanos = new java.util.ArrayList<>();
+    // VARIABLES DE VIDA DEL JUGADOR
+    private int vidaJugador = 100;
+    private BitmapText textoVida;
+    private float tiempoUltimoGolpe = -1.5f; // Para darle invulnerabilidad temporal
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -39,6 +44,7 @@ public class Main extends SimpleApplication {
         
         Aplicacion.setSettings(Ajustes);
         Aplicacion.start();
+        
     }
 
     @Override
@@ -63,6 +69,14 @@ public class Main extends SimpleApplication {
 
         EstadoFisicas = new BulletAppState();
         stateManager.attach(EstadoFisicas);
+
+        // Inicializar el texto de vida en el HUD
+        textoVida = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoVida.setSize(30);
+        textoVida.setColor(ColorRGBA.Green); // Verde para la salud
+        textoVida.setLocalTranslation(20, settings.getHeight() - 60, 0); // Un poco más abajo del contador
+        guiNode.attachChild(textoVida);
+        actualizarTextoVida();
 
 //        ModeloLaberinto = assetManager.loadModel("Models/Laberinto.j3o");
         ModeloLaberinto = assetManager.loadModel("Models/maze2.j3o");
@@ -154,6 +168,10 @@ public class Main extends SimpleApplication {
             ListaVillanos.add(NodoEnemigo); 
         }
         
+        // ASIGNAR VALOR INICIAL AL CONTADOR
+        villanosRestantes = ListaVillanos.size();
+        actualizarTextoContador();
+        
         EntradasJugador = new ManejoInputs();
         EntradasJugador.ConfigurarTeclado(inputManager);
         
@@ -197,10 +215,52 @@ public class Main extends SimpleApplication {
         setDisplayStatView(false);
     }
 
+    // NUEVOS MÉTODOS PARA CONTROLAR EL CONTADOR DESDE PANTALLA O DESDE OTRAS CLASES
+    public void actualizarTextoContador() {
+        if (textoContador != null) {
+            textoContador.setText("Villanos restantes: " + villanosRestantes);
+        }
+    }
+
+    public void reducirContadorVillanos() {
+        if (villanosRestantes > 0) {
+            villanosRestantes--;
+            actualizarTextoContador();
+        }
+        // VERIFICAR SI YA NO QUEDAN ENEMIGOS
+            if (villanosRestantes == 0) {
+                mostrarPantallaVictoria();
+            }
+    }
+    
+    //MÉTODO PARA MOSTRAR QUE GANASTE Y DETENER EL JUEGO
+    private void mostrarPantallaVictoria() {
+        // 1. Crear el texto de Victoria
+        BitmapText textoVictoria = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoVictoria.setText("¡VICTORIA! LABERINTO COMPLETADO");
+        textoVictoria.setSize(40);
+        textoVictoria.setColor(ColorRGBA.Green); // Color verde de éxito
+        
+        // 2. Centrarlo en la pantalla
+        float x = (settings.getWidth() / 2f) - (textoVictoria.getLineWidth() / 2f);
+        float y = (settings.getHeight() / 2f) + (textoVictoria.getLineHeight() / 2f);
+        textoVictoria.setLocalTranslation(x, y, 0);
+        
+        // 3. Pegarlo en el HUD
+        guiNode.attachChild(textoVictoria);
+        
+        // 4. Liberar el cursor para que el jugador pueda cerrar el juego cómodamente
+        inputManager.setCursorVisible(true);
+        cursorBloquedo = false; 
+        
+        speed=0;
+    }
+    
     @Override
     public void simpleUpdate(float Tpf) {
         TpfActual = Tpf; // guardar el tiempo del fotograma
         
+        tiempoUltimoGolpe += Tpf;
         // ocultamos el cursor cuando la ventana ya existe
         if (!cursorBloquedo) {
             inputManager.setCursorVisible(false);
@@ -226,11 +286,11 @@ public class Main extends SimpleApplication {
             System.out.println("Posición segura para enemigo: " + NodoSoldado.getWorldTranslation());
 
             // NUEVO LLAMADO AL DISPARO CON FÍSICAS
-            ManejoArmas.DispararLaser(cam, EstadoFisicas.getPhysicsSpace(), NodoSoldado, assetManager, rootNode);
+            ManejoArmas.DispararLaser(cam, EstadoFisicas.getPhysicsSpace(), NodoSoldado, assetManager, rootNode, this);
             TiempoUltimoDisparo = 0; 
         }
         
-        IAVillanos.PerseguirHeroe(NodoSoldado, ListaVillanos, Tpf);
+        IAVillanos.PerseguirHeroe(NodoSoldado, ListaVillanos, Tpf, this);
     }
 
     @Override
@@ -279,5 +339,59 @@ public class Main extends SimpleApplication {
         
         
         guiNode.attachChild(Mirilla); // aisgnarla al guiNode
+    }
+    
+    // MÉTODOS DE CONTROL DE VIDA Y CONDICIÓN DE DERROTA
+    public void actualizarTextoVida() {
+        if (textoVida != null) {
+            textoVida.setText("Vida: " + vidaJugador + "%");
+            if (vidaJugador <= 30) {
+                textoVida.setColor(ColorRGBA.Red);
+            }
+        }
+    }
+
+    public void recibirDanio(int cantidad) {
+        if (vidaJugador > 0) {
+            vidaJugador -= cantidad;
+            actualizarTextoVida();
+            
+            if (vidaJugador <= 0) {
+                vidaJugador = 0;
+                actualizarTextoVida();
+                mostrarPantallaDerrota();
+            }
+        }
+    }
+
+    private void mostrarPantallaDerrota() {
+        BitmapText textoDerrota = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoDerrota.setText("GAME OVER - TE HAN ELIMINADO");
+        textoDerrota.setSize(40);
+        textoDerrota.setColor(ColorRGBA.Red);
+        
+        float x = (settings.getWidth() / 2f) - (textoDerrota.getLineWidth() / 2f);
+        float y = (settings.getHeight() / 2f) + (textoDerrota.getLineHeight() / 2f);
+        textoDerrota.setLocalTranslation(x, y, 0);
+        
+        guiNode.attachChild(textoDerrota);
+        
+        inputManager.setCursorVisible(true);
+        cursorBloquedo = false;
+        speed = 0; // Congelar juego al morir
+    }
+
+    // GETTERS Y SETTERS PARA LA IA
+    public float getTiempoUltimoGolpe() { 
+        return tiempoUltimoGolpe; 
+    }
+    
+    public void setTiempoUltimoGolpe(float tiempo) { 
+        this.tiempoUltimoGolpe = tiempo; 
+    }
+    
+    // GETTER PARA PERMITIR LIMPIAR LA LISTA DESDE OTRAS CLASES
+    public java.util.ArrayList<Spatial> getListaVillanos() { 
+        return ListaVillanos; 
     }
 }

@@ -18,7 +18,7 @@ import java.util.List;
 public class ManejoArmas {
 
     //  Ahora pedimos el PhysicsSpace en lugar del NodoRaiz para el cálculo
-    public static void DispararLaser(Camera Camara, PhysicsSpace EspacioFisico, Node NodoSoldado, AssetManager GestorRecursos, Node NodoRaiz) {
+    public static void DispararLaser(Camera Camara, PhysicsSpace EspacioFisico, Node NodoSoldado, AssetManager GestorRecursos, Node NodoRaiz, Main app) {
         
         Vector3f Origen = NodoSoldado.getWorldTranslation().add(0, 1.5f, 0); 
         Vector3f Direccion = NodoSoldado.getControl(BetterCharacterControl.class).getViewDirection();
@@ -80,6 +80,12 @@ public class ManejoArmas {
                     if (controlFisico != null) {
                         EspacioFisico.remove(controlFisico);
                     }
+                    
+                    // Avisar a la clase Main que reduzca el contador de la pantalla
+                    app.reducirContadorVillanos();
+                    
+                    // Sacar al enemigo de la lista de persecución para evitar golpes fantasma
+                    app.getListaVillanos().remove(ObjetoGolpeado);
                     
                 } else {
                     // Si sobrevive al disparo, imprimimos la vida restante y actualizamos su nota adhesiva

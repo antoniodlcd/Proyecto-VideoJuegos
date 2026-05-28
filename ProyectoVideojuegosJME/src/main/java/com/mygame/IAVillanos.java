@@ -9,7 +9,7 @@ public class IAVillanos {
 
     // Pasamos el Soldado (Héroe), los enemigos y el Tpf
 
-    public static void PerseguirHeroe(Spatial Soldado, ArrayList<Spatial> ListaVillanos, float Tpf) {
+    public static void PerseguirHeroe(Spatial Soldado, ArrayList<Spatial> ListaVillanos, float Tpf, Main app) {
         // Obtenemos la posición del héroe
         Vector3f PosHeroe = Soldado.getWorldTranslation();
         
@@ -20,8 +20,17 @@ public class IAVillanos {
                 velocidad = 4.5f;
             }    
             MoverEnemigo(enemigo, PosHeroe, velocidad);
+            
+            float distancia = enemigo.getWorldTranslation().distance(PosHeroe);
+
+            if (distancia < 4.0f) {
+                if (app.getTiempoUltimoGolpe() >= 1.5f) {
+                    app.recibirDanio(20);
+                    app.setTiempoUltimoGolpe(0f);
+                    System.out.println("¡Un enemigo te ha golpeado!");
+                }
+            }
         }
-        
     }
 
  private static void MoverEnemigo(Spatial Enemigo, Vector3f Objetivo, float Velocidad) {
