@@ -27,18 +27,15 @@ public class Main extends SimpleApplication {
     private Spatial arania;
     private Spatial En_Tanque;
     private BitmapText textoContador;
-    private int villanosRestantes = 0;
-    private java.util.ArrayList<Spatial> ListaVillanos = new java.util.ArrayList<>();
     // VARIABLES DE VIDA DEL JUGADOR
     private int vidaJugador = 100;
     private BitmapText textoVida;
     private float tiempoUltimoGolpe = -1.5f; // Para darle invulnerabilidad temporal
     //Variables para la generacion de oleadas
-    private int oleadaActual = 0;
     private BitmapText textoOleada;
     // Quitamos PoolDeSpawns de simpleInitApp y la volvemos global
-    private java.util.ArrayList<Vector3f> PoolDeSpawns = new java.util.ArrayList<>();
     private Camera camMinimapa;
+    private GestorOleadas gestorOleadas;
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -119,20 +116,10 @@ public class Main extends SimpleApplication {
         textoOleada.setLocalTranslation(20, settings.getHeight() - 100, 0); 
         guiNode.attachChild(textoOleada);
 
-        // Llenamos el PoolDeSpawns con tus coordenadas
-        PoolDeSpawns.add(new Vector3f(14.43f, 2.5f, 378.24f));
-        PoolDeSpawns.add(new Vector3f(12.29f, 2.5f, 285.62f));
-        PoolDeSpawns.add(new Vector3f(11.50f, 2.5f, 270.16f));
-        PoolDeSpawns.add(new Vector3f(-40.95f, 2.5f, 191.44f));
-        PoolDeSpawns.add(new Vector3f(-62.91f, 2.5f, 191.77f));
-        PoolDeSpawns.add(new Vector3f(-258.61f, 2.5f, 192.83f));
-        PoolDeSpawns.add(new Vector3f(-310.77f, 2.5f, 202.06f));
-        PoolDeSpawns.add(new Vector3f(-327.76f, 2.5f, 260.86f));
-        PoolDeSpawns.add(new Vector3f(-338.89f, 2.5f, 185.40f));
-        PoolDeSpawns.add(new Vector3f(-428.48f, 2.5f, 88.78f));
 
-        // INICIAMOS LA PRIMERA OLEADA
-        iniciarNuevaOleada();
+        // inicializar el gestor de oleadas
+        gestorOleadas = new GestorOleadas(this);
+        gestorOleadas.iniciarNuevaOleada();
         
         
         EntradasJugador = new ManejoInputs();
@@ -201,78 +188,21 @@ public class Main extends SimpleApplication {
     
 
     // NUEVOS MÉTODOS PARA CONTROLAR EL CONTADOR DESDE PANTALLA O DESDE OTRAS CLASES
-    public void actualizarTextoContador() {
+    public void actualizarTextoContador(int restantes) {
         if (textoContador != null) {
-            textoContador.setText("Villanos restantes: " + villanosRestantes);
-        }
-    }
-
-    public void iniciarNuevaOleada() {
-        oleadaActual++;
-        
-        // Fórmula de dificultad: Oleada 1=4 enemigos, Oleada 2=6, Oleada 3=8...
-        int enemigosAInstanciar = 2 + (oleadaActual * 2); 
-        if (enemigosAInstanciar > PoolDeSpawns.size()) enemigosAInstanciar = PoolDeSpawns.size(); // Tope máximo de 10
-
-        Spatial modeloAraniaBase = assetManager.loadModel("Models/arania.j3o");
-        Spatial modeloTanqueBase = assetManager.loadModel("Models/En_Tanque.j3o");
-        java.util.Collections.shuffle(PoolDeSpawns); // Revolver posiciones
-
-        for (int i = 0; i < enemigosAInstanciar; i++) {
-            Node NodoEnemigo = new Node(); 
-            Spatial visualEnemigo;
-            if (i % 2 == 0) {
-                visualEnemigo = modeloAraniaBase.clone();
-                NodoEnemigo.setName("Arania");
-                visualEnemigo.setLocalTranslation(0, 0f, 0); 
-            } else {
-                visualEnemigo = modeloTanqueBase.clone();
-                NodoEnemigo.setName("Tanque");
-                visualEnemigo.setLocalTranslation(0, 1.2f, 0); 
-            }
-
-            NodoEnemigo.attachChild(visualEnemigo);
-            
-            // Los enemigos tienen más vida cada ronda
-            NodoEnemigo.setUserData("Vida", 50 + (oleadaActual * 50)); 
-            BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
-            NodoEnemigo.addControl(fisicasE);
-            
-            rootNode.attachChild(NodoEnemigo);
-            EstadoFisicas.getPhysicsSpace().add(fisicasE);
-            fisicasE.warp(PoolDeSpawns.get(i));
-            ListaVillanos.add(NodoEnemigo); 
-        }
-        
-        villanosRestantes = ListaVillanos.size();
-        actualizarTextoContador();
-        if (textoOleada != null) textoOleada.setText("Oleada: " + oleadaActual);
-    }
-
-    // SOBRESCRIBE TU MÉTODO ANTERIOR
-    public void reducirContadorVillanos() {
-        if (villanosRestantes > 0) {
-            villanosRestantes--;
-            actualizarTextoContador();
-        }
-        
-        // SI YA NO QUEDAN ENEMIGOS...
-        if (villanosRestantes <= 0) {
-            if (oleadaActual >= 3) { 
-                // Si venciste la oleada 3, ganas el juego
-                mostrarPantallaVictoria();
-            } else {
-                // Si no, arranca la siguiente ronda
-                iniciarNuevaOleada(); 
-            }
+            textoContador.setText("Villanos restantes: " + restantes);
         }
     }
     
-    
-    
-    
+    public void actualizarTextoOleada(int ronda) {
+        if (textoOleada != null) {
+            textoOleada.setText("Oleada: " + ronda);
+        }
+    }
+
+   
     //MÉTODO PARA MOSTRAR QUE GANASTE Y DETENER EL JUEGO
-    private void mostrarPantallaVictoria() {
+    public void mostrarPantallaVictoria() {
         // 1. Crear el texto de Victoria
         BitmapText textoVictoria = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
         textoVictoria.setText("¡VICTORIA! LABERINTO COMPLETADO");
@@ -328,7 +258,7 @@ public class Main extends SimpleApplication {
             TiempoUltimoDisparo = 0; 
         }
         
-        IAVillanos.PerseguirHeroe(NodoSoldado, ListaVillanos, Tpf, this);
+        IAVillanos.PerseguirHeroe(NodoSoldado, gestorOleadas.getListaVillanos(), Tpf, this);
         
         // --- ACTUALIZAR MINIMAPA ---
         Vector3f posJugador = NodoSoldado.getWorldTranslation();
@@ -409,7 +339,7 @@ public class Main extends SimpleApplication {
         }
     }
 
-    private void mostrarPantallaDerrota() {
+    public void mostrarPantallaDerrota() {
         BitmapText textoDerrota = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
         textoDerrota.setText("GAME OVER - TE HAN ELIMINADO");
         textoDerrota.setSize(40);
@@ -435,8 +365,12 @@ public class Main extends SimpleApplication {
         this.tiempoUltimoGolpe = tiempo; 
     }
     
-    // GETTER PARA PERMITIR LIMPIAR LA LISTA DESDE OTRAS CLASES
-    public java.util.ArrayList<Spatial> getListaVillanos() { 
-        return ListaVillanos; 
+    public BulletAppState getEstadoFisicas() {
+        return EstadoFisicas;
     }
+    
+    public GestorOleadas getGestorOleadas() {
+        return gestorOleadas;
+    }
+
 }

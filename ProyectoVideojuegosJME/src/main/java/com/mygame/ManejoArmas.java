@@ -82,10 +82,10 @@ public class ManejoArmas {
                     }
                     
                     // Avisar a la clase Main que reduzca el contador de la pantalla
-                    app.reducirContadorVillanos();
+                    app.getGestorOleadas().reducirContadorVillanos();
                     
                     // Sacar al enemigo de la lista de persecución para evitar golpes fantasma
-                    app.getListaVillanos().remove(ObjetoGolpeado);
+                    app.getGestorOleadas().getListaVillanos().remove(ObjetoGolpeado);
                     
                 } else {
                     // Si sobrevive al disparo, imprimimos la vida restante y actualizamos su nota adhesiva
