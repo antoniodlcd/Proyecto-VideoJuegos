@@ -11,6 +11,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
 import com.jme3.light.PointLight;
+import com.jme3.renderer.Camera;
 
 /* Clase principal que orquesta la inicialización de las físicas, el escenario, el héroe y el ciclo de vida del juego. */
 public class Main extends SimpleApplication {
@@ -32,6 +33,12 @@ public class Main extends SimpleApplication {
     private int vidaJugador = 100;
     private BitmapText textoVida;
     private float tiempoUltimoGolpe = -1.5f; // Para darle invulnerabilidad temporal
+    //Variables para la generacion de oleadas
+    private int oleadaActual = 0;
+    private BitmapText textoOleada;
+    // Quitamos PoolDeSpawns de simpleInitApp y la volvemos global
+    private java.util.ArrayList<Vector3f> PoolDeSpawns = new java.util.ArrayList<>();
+    private Camera camMinimapa;
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -106,8 +113,13 @@ public class Main extends SimpleApplication {
         Spatial modeloAraniaBase = assetManager.loadModel("Models/arania.j3o");
         Spatial modeloTanqueBase = assetManager.loadModel("Models/En_Tanque.j3o");
 
-        // 1. Creamos una lista con todos los puntos seguros que recolectaste (puedes agregar más si quieres)
-        java.util.ArrayList<Vector3f> PoolDeSpawns = new java.util.ArrayList<>();
+        textoOleada = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoOleada.setSize(30);
+        textoOleada.setColor(ColorRGBA.Cyan);
+        textoOleada.setLocalTranslation(20, settings.getHeight() - 100, 0); 
+        guiNode.attachChild(textoOleada);
+
+        // Llenamos el PoolDeSpawns con tus coordenadas
         PoolDeSpawns.add(new Vector3f(14.43f, 2.5f, 378.24f));
         PoolDeSpawns.add(new Vector3f(12.29f, 2.5f, 285.62f));
         PoolDeSpawns.add(new Vector3f(11.50f, 2.5f, 270.16f));
@@ -118,66 +130,15 @@ public class Main extends SimpleApplication {
         PoolDeSpawns.add(new Vector3f(-327.76f, 2.5f, 260.86f));
         PoolDeSpawns.add(new Vector3f(-338.89f, 2.5f, 185.40f));
         PoolDeSpawns.add(new Vector3f(-428.48f, 2.5f, 88.78f));
+
+        // INICIAMOS LA PRIMERA OLEADA
+        iniciarNuevaOleada();
         
-        // 2. MAGIA: Revolvemos la lista al azar como si fuera una baraja de cartas
-        java.util.Collections.shuffle(PoolDeSpawns);
-
-        // 3. Tomamos los primeros 10 lugares de la lista ya revuelta
-        for (int i = 0; i < 10; i++) {
-            
-            // Creamos un contenedor vacío. Este Nodo será el verdadero enemigo para el motor.
-            Node NodoEnemigo = new Node(); 
-            Spatial visualEnemigo;
-            
-            if (i % 2 == 0) {
-                // Instanciamos la Araña
-                visualEnemigo = modeloAraniaBase.clone();
-                NodoEnemigo.setName("Arania");
-                
-                // La araña está bien posicionada, la dejamos en el origen del Nodo (0,0,0)
-                visualEnemigo.setLocalTranslation(0, 0f, 0); 
-                
-            } else {
-                // Instanciamos el Tanque
-                visualEnemigo = modeloTanqueBase.clone();
-                NodoEnemigo.setName("Tanque");
-                
-                // Movemos solo el dibujo del Tanque hacia arriba dentro del contenedor.
-                // 1.2f es un valor aproximado, puedes subirlo 
-                visualEnemigo.setLocalTranslation(0, 1.2f, 0); 
-            }
-
-            // Metemos el dibujo visual dentro del Nodo contenedor
-            NodoEnemigo.attachChild(visualEnemigo);
-            
-            // Le pegamos los puntos de vida al Nodo contenedor
-            NodoEnemigo.setUserData("Vida", 100);
-
-            
-            // Las físicas ahora controlan al Nodo, no al dibujo
-            BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
-            NodoEnemigo.addControl(fisicasE);
-            
-            rootNode.attachChild(NodoEnemigo);
-            EstadoFisicas.getPhysicsSpace().add(fisicasE);
-            
-            // Asignamos el punto aleatorio seguro
-            fisicasE.warp(PoolDeSpawns.get(i));
-            
-            // Agregamos el Nodo a la lista de persecución
-            ListaVillanos.add(NodoEnemigo); 
-        }
-        
-        // ASIGNAR VALOR INICIAL AL CONTADOR
-        villanosRestantes = ListaVillanos.size();
-        actualizarTextoContador();
         
         EntradasJugador = new ManejoInputs();
         EntradasJugador.ConfigurarTeclado(inputManager);
         
 
-//        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(32, 2, 33));
-////        NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0,400, 500));
 
         if (MarcadorInicio != null) {
             Vector3f CoordenadaInicio = MarcadorInicio.getWorldTranslation();
@@ -213,7 +174,31 @@ public class Main extends SimpleApplication {
         
         //Aplicamos el material
         setDisplayStatView(false);
+        
+        // ==========================================
+        // CONFIGURACIÓN DEL MINIMAPA (RADAR)
+        // ==========================================
+        camMinimapa = cam.clone();
+        
+        // Recortamos la cámara para que solo dibuje en la esquina superior derecha
+        camMinimapa.setViewPort(0.75f, 0.98f, 0.70f, 0.95f); 
+        
+        // Hacemos que sea una vista 2D plana desde arriba
+        camMinimapa.setParallelProjection(true); 
+        float aspecto = (float) cam.getWidth() / cam.getHeight();
+        
+        // Ajustamos el zoom del radar (50 unidades de visión)
+        camMinimapa.setFrustum(-100f, 300f, -50f * aspecto, 50f * aspecto, 50f, -50f); 
+        
+        com.jme3.renderer.ViewPort vistaMinimapa = renderManager.createMainView("Minimapa", camMinimapa);
+        vistaMinimapa.setClearFlags(true, true, true);
+        vistaMinimapa.setBackgroundColor(new ColorRGBA(0.0f, 0.1f, 0.0f, 1f));
+        vistaMinimapa.attachScene(rootNode);
+    
     }
+    
+
+    
 
     // NUEVOS MÉTODOS PARA CONTROLAR EL CONTADOR DESDE PANTALLA O DESDE OTRAS CLASES
     public void actualizarTextoContador() {
@@ -222,16 +207,69 @@ public class Main extends SimpleApplication {
         }
     }
 
+    public void iniciarNuevaOleada() {
+        oleadaActual++;
+        
+        // Fórmula de dificultad: Oleada 1=4 enemigos, Oleada 2=6, Oleada 3=8...
+        int enemigosAInstanciar = 2 + (oleadaActual * 2); 
+        if (enemigosAInstanciar > PoolDeSpawns.size()) enemigosAInstanciar = PoolDeSpawns.size(); // Tope máximo de 10
+
+        Spatial modeloAraniaBase = assetManager.loadModel("Models/arania.j3o");
+        Spatial modeloTanqueBase = assetManager.loadModel("Models/En_Tanque.j3o");
+        java.util.Collections.shuffle(PoolDeSpawns); // Revolver posiciones
+
+        for (int i = 0; i < enemigosAInstanciar; i++) {
+            Node NodoEnemigo = new Node(); 
+            Spatial visualEnemigo;
+            if (i % 2 == 0) {
+                visualEnemigo = modeloAraniaBase.clone();
+                NodoEnemigo.setName("Arania");
+                visualEnemigo.setLocalTranslation(0, 0f, 0); 
+            } else {
+                visualEnemigo = modeloTanqueBase.clone();
+                NodoEnemigo.setName("Tanque");
+                visualEnemigo.setLocalTranslation(0, 1.2f, 0); 
+            }
+
+            NodoEnemigo.attachChild(visualEnemigo);
+            
+            // Los enemigos tienen más vida cada ronda
+            NodoEnemigo.setUserData("Vida", 50 + (oleadaActual * 50)); 
+            BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
+            NodoEnemigo.addControl(fisicasE);
+            
+            rootNode.attachChild(NodoEnemigo);
+            EstadoFisicas.getPhysicsSpace().add(fisicasE);
+            fisicasE.warp(PoolDeSpawns.get(i));
+            ListaVillanos.add(NodoEnemigo); 
+        }
+        
+        villanosRestantes = ListaVillanos.size();
+        actualizarTextoContador();
+        if (textoOleada != null) textoOleada.setText("Oleada: " + oleadaActual);
+    }
+
+    // SOBRESCRIBE TU MÉTODO ANTERIOR
     public void reducirContadorVillanos() {
         if (villanosRestantes > 0) {
             villanosRestantes--;
             actualizarTextoContador();
         }
-        // VERIFICAR SI YA NO QUEDAN ENEMIGOS
-            if (villanosRestantes == 0) {
+        
+        // SI YA NO QUEDAN ENEMIGOS...
+        if (villanosRestantes <= 0) {
+            if (oleadaActual >= 3) { 
+                // Si venciste la oleada 3, ganas el juego
                 mostrarPantallaVictoria();
+            } else {
+                // Si no, arranca la siguiente ronda
+                iniciarNuevaOleada(); 
             }
+        }
     }
+    
+    
+    
     
     //MÉTODO PARA MOSTRAR QUE GANASTE Y DETENER EL JUEGO
     private void mostrarPantallaVictoria() {
@@ -291,6 +329,13 @@ public class Main extends SimpleApplication {
         }
         
         IAVillanos.PerseguirHeroe(NodoSoldado, ListaVillanos, Tpf, this);
+        
+        // --- ACTUALIZAR MINIMAPA ---
+        Vector3f posJugador = NodoSoldado.getWorldTranslation();
+        // La cámara del mapa se posiciona 150 metros arriba de tu cabeza
+        camMinimapa.setLocation(new Vector3f(posJugador.x, 150f, posJugador.z)); 
+        // Y mira directamente hacia abajo
+        camMinimapa.lookAtDirection(new Vector3f(0, -1, 0), new Vector3f(0, 0, -1));
     }
 
     @Override

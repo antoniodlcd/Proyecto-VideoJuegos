@@ -42,9 +42,18 @@ public class ControlCamara {
         
         float FraccionMasCercana = 1.0f;
         for (PhysicsRayTestResult hit : Resultados) {
-            if (hit.getCollisionObject().getUserObject() != Personaje) {
-                if (hit.getHitFraction() < FraccionMasCercana) {
-                    FraccionMasCercana = hit.getHitFraction();
+            Spatial objetoChocado = (Spatial) hit.getCollisionObject().getUserObject();
+            
+            // --- SOLUCIÓN AL LAG VISUAL ---
+            // Verificamos que el objeto exista y no sea el propio héroe
+            if (objetoChocado != null && objetoChocado != Personaje) {
+                
+                //Si el objeto NO tiene "Vida", significa que es una pared de piedra.
+                // Si sí tiene "Vida", es un enemigo y la cámara lo ignorará por completo.
+                if (objetoChocado.getUserData("Vida") == null) {
+                    if (hit.getHitFraction() < FraccionMasCercana) {
+                        FraccionMasCercana = hit.getHitFraction();
+                    }
                 }
             }
         }
