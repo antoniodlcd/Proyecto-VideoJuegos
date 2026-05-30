@@ -36,7 +36,7 @@ public class GestorOleadas {
     public void iniciarNuevaOleada() {
         oleadaActual++;
         
-        int enemigosAInstanciar = 2 + (oleadaActual * 2); 
+        int enemigosAInstanciar = Constantes.OLEADA_ENEMIGOS_BASE + (oleadaActual * Constantes.OLEADA_ENEMIGOS_MULTIPLICADOR); 
         if (enemigosAInstanciar > PoolDeSpawns.size()) enemigosAInstanciar = PoolDeSpawns.size(); 
 
         Spatial modeloAraniaBase = app.getAssetManager().loadModel("Models/arania.j3o");
@@ -58,7 +58,7 @@ public class GestorOleadas {
             }
 
             NodoEnemigo.attachChild(visualEnemigo);
-            NodoEnemigo.setUserData("Vida", 50 + (oleadaActual * 50)); 
+            NodoEnemigo.setUserData("Vida", Constantes.OLEADA_VIDA_BASE + (oleadaActual * Constantes.OLEADA_VIDA_AUMENTO)); 
             
             BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
             NodoEnemigo.addControl(fisicasE);
@@ -84,7 +84,7 @@ public class GestorOleadas {
         }
         
         if (villanosRestantes <= 0) {
-            if (oleadaActual >= 3) { 
+            if (oleadaActual >= Constantes.OLEADAS_PARA_GANAR) { 
                 app.mostrarPantallaVictoria();
             } else {
                 iniciarNuevaOleada(); 

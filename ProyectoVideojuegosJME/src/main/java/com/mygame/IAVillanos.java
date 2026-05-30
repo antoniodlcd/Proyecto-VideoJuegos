@@ -15,17 +15,17 @@ public class IAVillanos {
         
         for (Spatial enemigo : ListaVillanos) {
             // Identificamos qué tipo de enemigo es por su nombre para asignarle su velocidad
-            float velocidad = 2.5f;
+            float velocidad = Constantes.ENEMIGO_VELOCIDAD_TANQUE;
             if (enemigo.getName().equals("Arania")) {
-                velocidad = 4.5f;
+                velocidad = Constantes.ENEMIGO_VELOCIDAD_ARANIA;
             }    
             MoverEnemigo(enemigo, PosHeroe, velocidad);
             
             float distancia = enemigo.getWorldTranslation().distance(PosHeroe);
 
-            if (distancia < 4.0f) {
-                if (app.getTiempoUltimoGolpe() >= 1.5f) {
-                    app.recibirDanio(20);
+            if (distancia < Constantes.ENEMIGO_DISTANCIA_ATAQUE) {
+                if (app.getTiempoUltimoGolpe() >= Constantes.JUGADOR_TIEMPO_INVULNERABILIDAD) {
+                    app.recibirDanio(Constantes.ENEMIGO_DANIO_GOLPE);
                     app.setTiempoUltimoGolpe(0f);
                     System.out.println("¡Un enemigo te ha golpeado!");
                 }
@@ -44,7 +44,7 @@ public class IAVillanos {
             float DistanciaAlHeroe = Direccion.length();
             
             // Esto asegura que no se encimen y destruyan el rendimiento de las físicas.
-            if (DistanciaAlHeroe > 4.0f) {
+            if (DistanciaAlHeroe > Constantes.ENEMIGO_DISTANCIA_ATAQUE) {
                 
                 // Si están lejos, normalizamos para obtener solo la dirección y caminamos
                 Direccion.normalizeLocal();

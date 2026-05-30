@@ -23,19 +23,18 @@ public class Main extends SimpleApplication {
     private ManejoInputs EntradasJugador;
     private float TiempoUltimoDisparo = 0f;
     private float TpfActual = 0f; // nueva declaracion de variable global
-    private final float CadenciaTiro = 0.5f;
     private Spatial arania;
     private Spatial En_Tanque;
     private BitmapText textoContador;
-    // VARIABLES DE VIDA DEL JUGADOR
-    private int vidaJugador = 100;
-    private BitmapText textoVida;
-    private float tiempoUltimoGolpe = -1.5f; // Para darle invulnerabilidad temporal
     //Variables para la generacion de oleadas
     private BitmapText textoOleada;
     // Quitamos PoolDeSpawns de simpleInitApp y la volvemos global
     private Camera camMinimapa;
     private GestorOleadas gestorOleadas;
+    // VARIABLES DE VIDA DEL JUGADOR
+    private int vidaJugador = Constantes.JUGADOR_VIDA_INICIAL;
+    private float tiempoUltimoGolpe = -Constantes.JUGADOR_TIEMPO_INVULNERABILIDAD; // Para darle invulnerabilidad temporal
+    private BitmapText textoVida;
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -237,7 +236,7 @@ public class Main extends SimpleApplication {
         
         // --- LÓGICA DE MOVIMIENTO ---
         Vector3f Direccion = EntradasJugador.ObtenerDireccion(cam);
-        NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(30f));
+        NodoSoldado.getControl(BetterCharacterControl.class).setWalkDirection(Direccion.mult(Constantes.JUGADOR_VELOCIDAD));
 
         Vector3f DireccionVista = cam.getDirection().clone();
         DireccionVista.setY(0);
@@ -248,7 +247,7 @@ public class Main extends SimpleApplication {
         TiempoUltimoDisparo += Tpf;
         
         // Si el jugador hace clic Y ha pasado el tiempo suficiente desde el último disparo...
-        if (EntradasJugador.getDisparando() && TiempoUltimoDisparo >= CadenciaTiro) {
+        if (EntradasJugador.getDisparando() && TiempoUltimoDisparo >= Constantes.ARMA_CADENCIA_TIRO) {
             
             // Imprime tu posición exacta en la consola para usarla como Spawn
             System.out.println("Posición segura para enemigo: " + NodoSoldado.getWorldTranslation());
@@ -320,7 +319,7 @@ public class Main extends SimpleApplication {
     public void actualizarTextoVida() {
         if (textoVida != null) {
             textoVida.setText("Vida: " + vidaJugador + "%");
-            if (vidaJugador <= 30) {
+            if (vidaJugador <= Constantes.JUGADOR_ALERTA_VIDA_BAJA) {
                 textoVida.setColor(ColorRGBA.Red);
             }
         }

@@ -22,7 +22,7 @@ public class ManejoArmas {
         
         Vector3f Origen = NodoSoldado.getWorldTranslation().add(0, 1.5f, 0); 
         Vector3f Direccion = NodoSoldado.getControl(BetterCharacterControl.class).getViewDirection();
-        Vector3f DestinoFinal = Origen.add(Direccion.mult(100f)); 
+        Vector3f DestinoFinal = Origen.add(Direccion.mult(Constantes.ARMA_ALCANCE)); 
         
         // --- RAYCAST FÍSICO INSTANTÁNEO ---
         List<PhysicsRayTestResult> Resultados = EspacioFisico.rayTest(Origen, DestinoFinal);
@@ -44,7 +44,7 @@ public class ManejoArmas {
         }
 
         // Cortamos la línea roja usando la fracción de distancia donde ocurrió el impacto
-        Vector3f PuntoDestinoLaser = Origen.add(Direccion.mult(100f * FraccionMasCercana));
+        Vector3f PuntoDestinoLaser = Origen.add(Direccion.mult(Constantes.ARMA_ALCANCE * FraccionMasCercana));
         float DistanciaLaser = Origen.distance(PuntoDestinoLaser);
         
         // Generación visual del cilindro...
@@ -67,7 +67,7 @@ public class ManejoArmas {
             if (vidaActual != null) {
                 
                 // Restamos 25 puntos (Se necesitan 4 disparos para matar a un enemigo de 100 de vida)
-                vidaActual -= 25; 
+                vidaActual -= Constantes.ARMA_DANIO; 
                 
                 if (vidaActual <= 0) {
                     System.out.println("¡" + ObjetoGolpeado.getName() + " ha sido DESTRUIDO!");
@@ -93,13 +93,13 @@ public class ManejoArmas {
                     ObjetoGolpeado.setUserData("Vida", vidaActual);
                 }
             } else {
-                // Si la variable vidaActual es nula, el láser chocó contra una pared del laberinto
+                // Si la variable vidaActual es nula, el láser chocó contra una pared del laberiaaAASDWWDSnto
                 System.out.println("El láser chocó contra el entorno.");
             }
         }
         
         GeoLaser.addControl(new AbstractControl() {
-            float TiempoDeVida = 0.1f; 
+            float TiempoDeVida = Constantes.ARMA_DURACION_VISUAL_LASER; 
             @Override
             protected void controlUpdate(float Tpf) {
                 TiempoDeVida -= Tpf;
