@@ -1,5 +1,11 @@
 package com.mygame;
 
+import com.mygame.vista.ControlCamara;
+import com.mygame.combate.ManejoArmas;
+import com.mygame.entidades.IAVillanos;
+import com.mygame.sistemas.ManejoFisicas;
+import com.mygame.sistemas.GestorOleadas;
+import com.mygame.sistemas.ManejoInputs;
 import com.jme3.app.SimpleApplication;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.control.BetterCharacterControl;

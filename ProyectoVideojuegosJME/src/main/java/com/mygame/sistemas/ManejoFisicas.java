@@ -1,4 +1,4 @@
-package com.mygame;
+package com.mygame.sistemas;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.bullet.BulletAppState;

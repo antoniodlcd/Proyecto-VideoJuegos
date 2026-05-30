@@ -1,4 +1,4 @@
-package com.mygame;
+package com.mygame.combate;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.bullet.PhysicsSpace;
@@ -13,6 +13,8 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.shape.Cylinder;
+import com.mygame.Constantes;
+import com.mygame.Main;
 import java.util.List;
 
 public class ManejoArmas {
@@ -93,7 +95,7 @@ public class ManejoArmas {
                     ObjetoGolpeado.setUserData("Vida", vidaActual);
                 }
             } else {
-                // Si la variable vidaActual es nula, el láser chocó contra una pared del laberiaaAASDWWDSnto
+                // Si la variable vidaActual es nula, el láser chocó contra una pared del laberinto
                 System.out.println("El láser chocó contra el entorno.");
             }
         }

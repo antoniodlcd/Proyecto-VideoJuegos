@@ -1,4 +1,4 @@
-package com.mygame;
+package com.mygame.vista;
 
 import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.collision.PhysicsRayTestResult;
