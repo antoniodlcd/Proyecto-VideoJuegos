@@ -17,9 +17,16 @@ public class GestorOleadas {
     private ArrayList<Spatial> ListaVillanos = new ArrayList<>();
     private ArrayList<Vector3f> PoolDeSpawns = new ArrayList<>();
 
-    public GestorOleadas(Main app) {
+    public GestorOleadas(Main app, Spatial modeloLaberinto) {
         this.app = app;
-        cargarSpawns();
+        
+        this.PoolDeSpawns.clear();
+        escanearSpawnsEnMapa(modeloLaberinto);
+        
+        if (PoolDeSpawns.isEmpty()) {
+            System.out.println("No se encontraron nodos 'Spawn_' en el mapa");
+            cargarSpawns();
+        }
     }
 
     private void cargarSpawns() {
@@ -90,6 +97,20 @@ public class GestorOleadas {
                 app.mostrarPantallaVictoria();
             } else {
                 iniciarNuevaOleada(); 
+            }
+        }
+    }
+    
+    private void escanearSpawnsEnMapa(Spatial nodoRaiz) {
+        if (nodoRaiz.getName() != null && nodoRaiz.getName().startsWith("Spawn_")) {
+            PoolDeSpawns.add(nodoRaiz.getWorldTranslation().clone());
+            System.out.println("Punto de Spawn detectado en: " + nodoRaiz.getWorldTranslation());
+        }
+        
+        if (nodoRaiz instanceof Node) {
+            Node contenedor = (Node) nodoRaiz;
+            for (Spatial hijo : contenedor.getChildren()) {
+                escanearSpawnsEnMapa(hijo);
             }
         }
     }

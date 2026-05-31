@@ -7,7 +7,7 @@ public class Constantes {
     // configuracion del jugador
     public static final int   JUGADOR_VIDA_INICIAL = 100;
     public static final int   JUGADOR_ALERTA_VIDA_BAJA = 30;
-    public static final float JUGADOR_VELOCIDAD = 30.0f;
+    public static final float JUGADOR_VELOCIDAD = 50.0f;
     public static final float JUGADOR_TIEMPO_INVULNERABILIDAD = 1.5f;
     
     // configuracion de enemigos e ia

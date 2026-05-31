@@ -134,7 +134,7 @@ public class Main extends SimpleApplication {
 
 
         // inicializar el gestor de oleadas
-        gestorOleadas = new GestorOleadas(this);
+        gestorOleadas = new GestorOleadas(this, ModeloLaberinto);
         gestorOleadas.iniciarNuevaOleada();
         
         
@@ -289,7 +289,7 @@ public class Main extends SimpleApplication {
         if (!juegoTerminado && MarcadorSalida != null) {
             float distanciaASalida = NodoSoldado.getWorldTranslation().distance(MarcadorSalida.getWorldTranslation());
             
-            if (distanciaASalida < 3.0f) {
+            if (distanciaASalida < 10.0f) {
                 juegoTerminado = true;
                 mostrarPantallaVictoria();
             }
