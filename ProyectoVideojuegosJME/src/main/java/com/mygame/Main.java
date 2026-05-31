@@ -41,6 +41,9 @@ public class Main extends SimpleApplication {
     private int vidaJugador = Constantes.JUGADOR_VIDA_INICIAL;
     private float tiempoUltimoGolpe = -Constantes.JUGADOR_TIEMPO_INVULNERABILIDAD; // Para darle invulnerabilidad temporal
     private BitmapText textoVida;
+    // marcador de salida del laberinto
+    private Spatial MarcadorSalida;
+    private boolean juegoTerminado = false;
 
     public static void main(String[] args) {
         Main Aplicacion = new Main();
@@ -88,7 +91,7 @@ public class Main extends SimpleApplication {
         actualizarTextoVida();
 
 //        ModeloLaberinto = assetManager.loadModel("Models/Laberinto.j3o");
-        ModeloLaberinto = assetManager.loadModel("Models/maze2.j3o");
+        ModeloLaberinto = assetManager.loadModel("Models/maze3.j3o");
         ModeloLaberinto.setLocalScale(5f); // mapa escalado a la mitad
         ManejoFisicas.ConfigurarEscena(ModeloLaberinto, rootNode, EstadoFisicas, assetManager);
 
@@ -107,6 +110,14 @@ public class Main extends SimpleApplication {
         } else {
             System.out.println("Error: No se encontro 'PuntoInicio', usando coordenadas por defecto");
             NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0, 20 ,0));
+        }
+        
+        MarcadorSalida = EncontrarNodo(ModeloLaberinto, "PuntoFin");
+        
+        if (MarcadorSalida != null) {
+            System.out.println("Punto de salida detectado en: " + MarcadorSalida.getWorldTranslation());
+        } else {
+            System.out.println("Error: No se enctonro 'PuntoFin' en el modelo del laberinto");
         }
 
         // =====================================================================
@@ -208,6 +219,8 @@ public class Main extends SimpleApplication {
    
     //MÉTODO PARA MOSTRAR QUE GANASTE Y DETENER EL JUEGO
     public void mostrarPantallaVictoria() {
+        juegoTerminado = true;
+        
         // 1. Crear el texto de Victoria
         BitmapText textoVictoria = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
         textoVictoria.setText("¡VICTORIA! LABERINTO COMPLETADO");
@@ -271,6 +284,16 @@ public class Main extends SimpleApplication {
         camMinimapa.setLocation(new Vector3f(posJugador.x, 150f, posJugador.z)); 
         // Y mira directamente hacia abajo
         camMinimapa.lookAtDirection(new Vector3f(0, -1, 0), new Vector3f(0, 0, -1));
+        
+        // --- VERIFICAR SI SE LLEGA A LA META ---
+        if (!juegoTerminado && MarcadorSalida != null) {
+            float distanciaASalida = NodoSoldado.getWorldTranslation().distance(MarcadorSalida.getWorldTranslation());
+            
+            if (distanciaASalida < 3.0f) {
+                juegoTerminado = true;
+                mostrarPantallaVictoria();
+            }
+        }
     }
 
     @Override
