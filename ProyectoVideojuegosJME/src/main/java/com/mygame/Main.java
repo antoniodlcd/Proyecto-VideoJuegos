@@ -294,11 +294,12 @@ public class Main extends SimpleApplication {
                 mostrarPantallaVictoria();
             }
         }
+        
     }
 
     @Override
     public void simpleRender(RenderManager rm) {
-        ControlCamara.ActualizarCamaraFisica(
+            ControlCamara.ActualizarCamaraFisica(
             cam, 
             NodoSoldado, 
             TpfActual, 

@@ -8,11 +8,11 @@ import com.jme3.renderer.Camera;
 import com.jme3.scene.Spatial;
 import java.util.List;
 
-/* Clase encargada de gestionar el comportamiento de la cámara orbital, incluyendo la rotación y la detección de colisiones con el entorno. */
 public class ControlCamara {
 
     private static float AnguloHorizontal = 0;
-    private static float AnguloVertical = 0.2f; // inicia ligeramente inclinada hacia abajo
+    // Iniciamos la cámara un poco más arriba
+    private static float AnguloVertical = 0.2f; 
     private static final float RADIO_MAXIMO = 15.0f; 
     private static final float ALTURA_IDEAL = 5.5f; 
     private static final float VELOCIDAD_ROTACION = 3.5f;
@@ -21,12 +21,13 @@ public class ControlCamara {
     public static void ActualizarCamaraFisica(Camera Cam, Spatial Personaje, float Tpf, float deltaX, float deltaY, PhysicsSpace EspacioFisico) {
         if (Personaje == null) return;
 
-        // sumar el movimiento del raton
         AnguloHorizontal -= deltaX * VELOCIDAD_ROTACION;
         AnguloVertical -= deltaY * VELOCIDAD_ROTACION;
         
-        // evita que la camara de volteretas
-        AnguloVertical = FastMath.clamp(AnguloVertical, -0.2f, FastMath.HALF_PI - 0.1f);
+        // --- PROTECCIÓN DEL SUELO INVISIBLE ---
+        // Cambiamos el límite inferior a 0.05f. Esto le prohíbe a la cámara 
+        // bajar más allá de la cintura, evitando que choque con el piso.
+        AnguloVertical = FastMath.clamp(AnguloVertical, 0.05f, FastMath.HALF_PI - 0.1f);
 
         Vector3f PosCabeza = Personaje.getWorldTranslation().add(0, 1.8f, 0); 
         
@@ -44,21 +45,23 @@ public class ControlCamara {
         for (PhysicsRayTestResult hit : Resultados) {
             Spatial objetoChocado = (Spatial) hit.getCollisionObject().getUserObject();
             
-            // --- SOLUCIÓN AL LAG VISUAL ---
-            // Verificamos que el objeto exista y no sea el propio héroe
             if (objetoChocado != null && objetoChocado != Personaje) {
-                
-                //Si el objeto NO tiene "Vida", significa que es una pared de piedra.
-                // Si sí tiene "Vida", es un enemigo y la cámara lo ignorará por completo.
                 if (objetoChocado.getUserData("Vida") == null) {
-                    if (hit.getHitFraction() < FraccionMasCercana) {
-                        FraccionMasCercana = hit.getHitFraction();
+                    
+                    // --- MAGIA TRIGONOMÉTRICA (Ignorar el piso) ---
+                    // Obtenemos hacia dónde mira el objeto golpeado. Si mira hacia arriba (Y > 0.8),
+                    // sabemos que es el piso y la cámara lo atraviesa sin dar tirones.
+                    Vector3f normal = hit.getHitNormalLocal();
+                    if (Math.abs(normal.y) < 0.8f) {
+                        if (hit.getHitFraction() < FraccionMasCercana) {
+                            FraccionMasCercana = hit.getHitFraction();
+                        }
                     }
                 }
             }
         }
 
-       Vector3f PosicionFinal;
+        Vector3f PosicionFinal;
         if (FraccionMasCercana < 1.0f) {
             Vector3f DireccionRayo = PosicionIdeal.subtract(PosCabeza);
             float DistanciaTotal = DireccionRayo.length();
@@ -68,31 +71,8 @@ public class ControlCamara {
             if (DistanciaSegura < 1.5f) DistanciaSegura = 1.5f; 
 
             PosicionFinal = PosCabeza.add(DireccionRayo.mult(DistanciaSegura));
-            
-            // --- NUEVO: OCULTAR EL MODELO VISUAL SI LA CÁMARA ESTÁ MUY CERCA ---
-            if (Personaje instanceof com.jme3.scene.Node) {
-                com.jme3.scene.Node nodo = (com.jme3.scene.Node) Personaje;
-                if (!nodo.getChildren().isEmpty()) {
-                    Spatial visual = nodo.getChild(0);
-                    if (DistanciaSegura <= 2.0f) {
-                        visual.setCullHint(Spatial.CullHint.Always); // Hace invisible al robot
-                    } else {
-                        visual.setCullHint(Spatial.CullHint.Inherit); // Lo vuelve a mostrar
-                    }
-                }
-            }
-            // -------------------------------------------------------------------
-            
         } else {
             PosicionFinal = PosicionIdeal;
-            
-            // Asegurarnos de que el personaje sea visible al caminar libremente
-            if (Personaje instanceof com.jme3.scene.Node) {
-                com.jme3.scene.Node nodo = (com.jme3.scene.Node) Personaje;
-                if (!nodo.getChildren().isEmpty()) {
-                    nodo.getChild(0).setCullHint(Spatial.CullHint.Inherit);
-                }
-            }
         }
 
         Cam.setLocation(PosicionFinal);

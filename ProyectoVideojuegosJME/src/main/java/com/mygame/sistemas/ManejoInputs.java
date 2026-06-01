@@ -69,9 +69,9 @@ public Vector3f ObtenerDireccion(Camera Camara) {
         if (Izquierda) DireccionCaminata.addLocal(CamLeft);
         if (Derecha) DireccionCaminata.addLocal(CamLeft.negate());
 
-        // --- PROTECCIÓN MATEMÁTICA ---
-        // Solo normalizamos si el jugador realmente está pulsando una tecla.
-        // Esto evita errores de físicas cuando te quedas quieto pegado a una pared.
+        // --- SOLUCIÓN AL TIRÓN FÍSICO ---
+        // Solo normalizamos si hay una dirección real (mayor a cero).
+        // Esto evita el error NaN y el reinicio de las físicas.
         if (DireccionCaminata.lengthSquared() > 0) {
             DireccionCaminata.normalizeLocal();
         }
