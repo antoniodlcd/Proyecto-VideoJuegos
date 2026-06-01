@@ -7,14 +7,19 @@ public class Constantes {
     // configuracion del jugador
     public static final int   JUGADOR_VIDA_INICIAL = 100;
     public static final int   JUGADOR_ALERTA_VIDA_BAJA = 30;
-    public static final float JUGADOR_VELOCIDAD = 20.0f;
+    public static final float JUGADOR_VELOCIDAD = 25.0f;
     public static final float JUGADOR_TIEMPO_INVULNERABILIDAD = 1.5f;
     
     // configuracion de enemigos e ia
     public static final float ENEMIGO_VELOCIDAD_ARANIA = 4.5f;
-    public static final float ENEMIGO_VELOCIDAD_TANQUE = 2.5f;
+    public static final float ENEMIGO_VELOCIDAD_TANQUE = 3f;
     public static final float ENEMIGO_DISTANCIA_ATAQUE = 4.0f;
     public static final int   ENEMIGO_DANIO_GOLPE = 20;
+    
+    // --- NUEVAS REGLAS DEL TANQUE BOLSA ---
+    public static final float ENEMIGO_TANQUE_DISTANCIA_DISPARO = 35.0f; // Te dispara desde lejos
+    public static final float ENEMIGO_TANQUE_CADENCIA = 3.0f; // Tarda 3 segundos en recargar su arma
+    public static final int   ENEMIGO_TANQUE_DANIO_DISPARO = 10; // Daño del proyectil
     
     // configuracion de oleadas
     public static final int OLEADAS_PARA_GANAR = 10;

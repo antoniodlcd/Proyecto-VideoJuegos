@@ -40,6 +40,29 @@ public class GestorOleadas {
         PoolDeSpawns.add(new Vector3f(-327.76f, 2.5f, 260.86f));
         PoolDeSpawns.add(new Vector3f(-338.89f, 2.5f, 185.40f));
         PoolDeSpawns.add(new Vector3f(-428.48f, 2.5f, 88.78f));
+        PoolDeSpawns.add(new Vector3f(81.34f, 2.5f, 375.94f));
+        PoolDeSpawns.add(new Vector3f(61.38f, 2.5f, 376.10f));
+        PoolDeSpawns.add(new Vector3f(-34.14f, 2.5f, 365.12f));
+        PoolDeSpawns.add(new Vector3f(9.02f, 2.5f, 327.24f));
+        PoolDeSpawns.add(new Vector3f(8.96f, 2.5f, 299.63f));
+        PoolDeSpawns.add(new Vector3f(11.69f, 2.5f, 256.12f));
+        PoolDeSpawns.add(new Vector3f(-11.32f, 2.5f, 189.30f));
+        PoolDeSpawns.add(new Vector3f(-37.26f, 2.5f, 189.49f));
+        PoolDeSpawns.add(new Vector3f(-115.77f, 2.5f, 189.68f));
+        PoolDeSpawns.add(new Vector3f(-183.30f, 2.5f, 189.78f));
+        PoolDeSpawns.add(new Vector3f(-245.50f, 2.5f, 189.87f));
+        PoolDeSpawns.add(new Vector3f(-310.40f, 2.5f, 207.74f));
+        PoolDeSpawns.add(new Vector3f(-332.54f, 2.5f, 256.98f));
+        PoolDeSpawns.add(new Vector3f(-430.20f, 2.5f, 138.00f));
+        PoolDeSpawns.add(new Vector3f(-430.01f, 2.5f, 154.30f));
+        PoolDeSpawns.add(new Vector3f(-408.95f, 2.5f, 173.48f));
+        PoolDeSpawns.add(new Vector3f(-393.44f, 2.5f, 147.26f));
+        PoolDeSpawns.add(new Vector3f(-364.94f, 2.5f, 151.61f));
+        PoolDeSpawns.add(new Vector3f(-366.67f, 2.5f, 164.38f));
+        PoolDeSpawns.add(new Vector3f(-359.94f, 2.5f, 147.52f));
+        PoolDeSpawns.add(new Vector3f(-362.96f, 2.5f, 123.32f));
+        PoolDeSpawns.add(new Vector3f(-371.98f, 2.5f, 125.55f));
+        PoolDeSpawns.add(new Vector3f(-452.20f, 2.5f, 327.21f));
     }
 
     public void iniciarNuevaOleada() {
@@ -51,7 +74,7 @@ public class GestorOleadas {
         Spatial modeloAraniaBase = app.getAssetManager().loadModel("Models/arania.j3o");
         Spatial modeloTanqueBase = app.getAssetManager().loadModel("Models/En_Tanque.j3o");
         
-        Collections.shuffle(PoolDeSpawns); 
+Collections.shuffle(PoolDeSpawns); 
 
         for (int i = 0; i < enemigosAInstanciar; i++) {
             Node NodoEnemigo = new Node(); 
@@ -74,7 +97,32 @@ public class GestorOleadas {
             
             app.getRootNode().attachChild(NodoEnemigo);
             app.getEstadoFisicas().getPhysicsSpace().add(fisicasE);
-            fisicasE.warp(PoolDeSpawns.get(i));
+            
+            // ==========================================================
+            // LÓGICA DE SPAWN EN PAREJAS CON OFFSET
+            // ==========================================================
+            // 1. Agrupamos de dos en dos hacia el mismo punto de spawn
+            int indiceSpawn = i / 2; 
+            
+            // Protección: Si hay más enemigos que puntos de spawn, usamos el último punto repetidamente
+            if (indiceSpawn >= PoolDeSpawns.size()) {
+                indiceSpawn = PoolDeSpawns.size() - 1; 
+            }
+            
+            // Clonamos el vector para no modificar permanentemente la lista original
+            Vector3f PuntoBase = PoolDeSpawns.get(indiceSpawn).clone();
+            
+            // 2. Aplicamos el desplazamiento físico para que no exploten al nacer
+            if (i % 2 == 0) {
+                // Las Arañas aparecen 1.5 metros a la derecha del punto central
+                PuntoBase.addLocal(1.5f, 0, 0);
+            } else {
+                // Los Tanques aparecen 1.5 metros a la izquierda del punto central
+                PuntoBase.addLocal(-1.5f, 0, 0);
+            }
+            
+            // Finalmente, los mandamos a su coordenada segura y desplazada
+            fisicasE.warp(PuntoBase);
             
             ListaVillanos.add(NodoEnemigo); 
         }
