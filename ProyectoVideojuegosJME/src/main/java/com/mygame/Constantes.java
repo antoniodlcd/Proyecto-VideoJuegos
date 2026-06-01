@@ -7,7 +7,7 @@ public class Constantes {
     // configuracion del jugador
     public static final int   JUGADOR_VIDA_INICIAL = 100;
     public static final int   JUGADOR_ALERTA_VIDA_BAJA = 30;
-    public static final float JUGADOR_VELOCIDAD = 50.0f;
+    public static final float JUGADOR_VELOCIDAD = 20.0f;
     public static final float JUGADOR_TIEMPO_INVULNERABILIDAD = 1.5f;
     
     // configuracion de enemigos e ia
@@ -17,8 +17,8 @@ public class Constantes {
     public static final int   ENEMIGO_DANIO_GOLPE = 20;
     
     // configuracion de oleadas
-    public static final int OLEADAS_PARA_GANAR = 3;
-    public static final int OLEADA_ENEMIGOS_BASE = 2;
+    public static final int OLEADAS_PARA_GANAR = 10;
+    public static final int OLEADA_ENEMIGOS_BASE = 5;
     public static final int OLEADA_ENEMIGOS_MULTIPLICADOR = 2;
     public static final int OLEADA_VIDA_BASE = 50;
     public static final int OLEADA_VIDA_AUMENTO = 50;

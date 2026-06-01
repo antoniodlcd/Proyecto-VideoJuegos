@@ -119,4 +119,9 @@ public class GestorOleadas {
     public ArrayList<Spatial> getListaVillanos() {
         return ListaVillanos;
     }
+    
+    // Getters para vigilancia
+    public ArrayList<Vector3f> getPoolDeSpawns() {
+        return PoolDeSpawns;
+    }
 }

@@ -54,9 +54,9 @@ public class ManejoFisicas {
         Node NodoPersonaje = new Node("NodoHeroe");
         NodoRaiz.attachChild(NodoPersonaje);
         NodoPersonaje.attachChild(Modelo);
-        Modelo.setLocalTranslation(1.8f, 0, -2.1f); 
+        Modelo.setLocalTranslation(1.8f, 0f, -2.1f); 
 
-        BetterCharacterControl ControlPersonaje = new BetterCharacterControl(0.5f, 1.8f, 80f);
+        BetterCharacterControl ControlPersonaje = new BetterCharacterControl(0.8f, 1.8f, 80f);
         NodoPersonaje.addControl(ControlPersonaje);
         Estado.getPhysicsSpace().add(ControlPersonaje);
         

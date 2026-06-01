@@ -59,7 +59,7 @@ public class ManejoInputs implements ActionListener, AnalogListener {
         if (Nombre.equals("RatonYAbajo")) DeltaRatonY += Valor;
     }
 
-    public Vector3f ObtenerDireccion(Camera Camara) {
+public Vector3f ObtenerDireccion(Camera Camara) {
         Vector3f DireccionCaminata = new Vector3f();
         Vector3f CamDir = Camara.getDirection().clone().setY(0).normalizeLocal();
         Vector3f CamLeft = Camara.getLeft().clone().setY(0).normalizeLocal();
@@ -69,7 +69,14 @@ public class ManejoInputs implements ActionListener, AnalogListener {
         if (Izquierda) DireccionCaminata.addLocal(CamLeft);
         if (Derecha) DireccionCaminata.addLocal(CamLeft.negate());
 
-        return DireccionCaminata.normalizeLocal();
+        // --- PROTECCIÓN MATEMÁTICA ---
+        // Solo normalizamos si el jugador realmente está pulsando una tecla.
+        // Esto evita errores de físicas cuando te quedas quieto pegado a una pared.
+        if (DireccionCaminata.lengthSquared() > 0) {
+            DireccionCaminata.normalizeLocal();
+        }
+
+        return DireccionCaminata;
     }
 
     // Getters para acceder a los estados desde otras clases

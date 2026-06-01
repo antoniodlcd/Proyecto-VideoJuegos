@@ -58,7 +58,7 @@ public class ControlCamara {
             }
         }
 
-        Vector3f PosicionFinal;
+       Vector3f PosicionFinal;
         if (FraccionMasCercana < 1.0f) {
             Vector3f DireccionRayo = PosicionIdeal.subtract(PosCabeza);
             float DistanciaTotal = DireccionRayo.length();
@@ -68,8 +68,31 @@ public class ControlCamara {
             if (DistanciaSegura < 1.5f) DistanciaSegura = 1.5f; 
 
             PosicionFinal = PosCabeza.add(DireccionRayo.mult(DistanciaSegura));
+            
+            // --- NUEVO: OCULTAR EL MODELO VISUAL SI LA CÁMARA ESTÁ MUY CERCA ---
+            if (Personaje instanceof com.jme3.scene.Node) {
+                com.jme3.scene.Node nodo = (com.jme3.scene.Node) Personaje;
+                if (!nodo.getChildren().isEmpty()) {
+                    Spatial visual = nodo.getChild(0);
+                    if (DistanciaSegura <= 2.0f) {
+                        visual.setCullHint(Spatial.CullHint.Always); // Hace invisible al robot
+                    } else {
+                        visual.setCullHint(Spatial.CullHint.Inherit); // Lo vuelve a mostrar
+                    }
+                }
+            }
+            // -------------------------------------------------------------------
+            
         } else {
             PosicionFinal = PosicionIdeal;
+            
+            // Asegurarnos de que el personaje sea visible al caminar libremente
+            if (Personaje instanceof com.jme3.scene.Node) {
+                com.jme3.scene.Node nodo = (com.jme3.scene.Node) Personaje;
+                if (!nodo.getChildren().isEmpty()) {
+                    nodo.getChild(0).setCullHint(Spatial.CullHint.Inherit);
+                }
+            }
         }
 
         Cam.setLocation(PosicionFinal);

@@ -1,67 +1,100 @@
 package com.mygame.entidades;
 
+import com.jme3.bullet.collision.PhysicsRayTestResult;
 import com.jme3.bullet.control.BetterCharacterControl;
+import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Spatial;
 import com.mygame.Constantes;
 import com.mygame.Main;
 import java.util.ArrayList;
+import java.util.List;
 
 public class IAVillanos {
 
-    // Pasamos el Soldado (Héroe), los enemigos y el Tpf
-
     public static void PerseguirHeroe(Spatial Soldado, ArrayList<Spatial> ListaVillanos, float Tpf, Main app) {
-        // Obtenemos la posición del héroe
         Vector3f PosHeroe = Soldado.getWorldTranslation();
         
         for (Spatial enemigo : ListaVillanos) {
-            // Identificamos qué tipo de enemigo es por su nombre para asignarle su velocidad
             float velocidad = Constantes.ENEMIGO_VELOCIDAD_TANQUE;
             if (enemigo.getName().equals("Arania")) {
                 velocidad = Constantes.ENEMIGO_VELOCIDAD_ARANIA;
             }    
-            MoverEnemigo(enemigo, PosHeroe, velocidad);
             
-            float distancia = enemigo.getWorldTranslation().distance(PosHeroe);
-
-            if (distancia < Constantes.ENEMIGO_DISTANCIA_ATAQUE) {
-                if (app.getTiempoUltimoGolpe() >= Constantes.JUGADOR_TIEMPO_INVULNERABILIDAD) {
-                    app.recibirDanio(Constantes.ENEMIGO_DANIO_GOLPE);
-                    app.setTiempoUltimoGolpe(0f);
-                    System.out.println("¡Un enemigo te ha golpeado!");
+            // =======================================================
+            // 1. SISTEMA DE VISIÓN (RAYCAST)
+            // =======================================================
+            boolean veAlJugador = false;
+            float distanciaAlJugador = enemigo.getWorldTranslation().distance(PosHeroe);
+            
+            if (distanciaAlJugador < 40f) { 
+                Vector3f OjoEnemigo = enemigo.getWorldTranslation().add(0, 1.5f, 0);
+                Vector3f OjoJugador = PosHeroe.add(0, 1.5f, 0);
+                
+                List<PhysicsRayTestResult> impactos = app.getEstadoFisicas().getPhysicsSpace().rayTest(OjoEnemigo, OjoJugador);
+                float impactoMasCercano = 1.0f;
+                Spatial objetoVisto = null;
+                
+                for (PhysicsRayTestResult hit : impactos) {
+                    Spatial objeto = (Spatial) hit.getCollisionObject().getUserObject();
+                    if (objeto != null && objeto != enemigo) {
+                        if (hit.getHitFraction() < impactoMasCercano) {
+                            impactoMasCercano = hit.getHitFraction();
+                            objetoVisto = objeto;
+                        }
+                    }
+                }
+                
+                if (objetoVisto == Soldado) {
+                    veAlJugador = true;
                 }
             }
-        }
-    }
 
- private static void MoverEnemigo(Spatial Enemigo, Vector3f Objetivo, float Velocidad) {
-        BetterCharacterControl fisiscasEnemigo = Enemigo.getControl(BetterCharacterControl.class);
-        
-        if (fisiscasEnemigo != null) {
-            Vector3f Direccion = Objetivo.subtract(Enemigo.getWorldTranslation());
-            Direccion.setY(0); // Mantener el movimiento en el suelo
-
-            // Medimos a qué distancia exacta se encuentra este enemigo del jugador
-            float DistanciaAlHeroe = Direccion.length();
+            // =======================================================
+            // 2. TOMA DE DECISIONES (Caza vs Centinela)
+            // =======================================================
+            BetterCharacterControl fisicas = enemigo.getControl(BetterCharacterControl.class);
             
-            // Esto asegura que no se encimen y destruyan el rendimiento de las físicas.
-            if (DistanciaAlHeroe > Constantes.ENEMIGO_DISTANCIA_ATAQUE) {
-                
-                // Si están lejos, normalizamos para obtener solo la dirección y caminamos
-                Direccion.normalizeLocal();
-                fisiscasEnemigo.setViewDirection(Direccion);
-                fisiscasEnemigo.setWalkDirection(Direccion.mult(Velocidad));
-                
+            if (veAlJugador) {
+                // MODO CAZA: Corre hacia el jugador
+                if (fisicas != null) {
+                    Vector3f Direccion = PosHeroe.subtract(enemigo.getWorldTranslation());
+                    Direccion.setY(0); 
+                    
+                    if (distanciaAlJugador > Constantes.ENEMIGO_DISTANCIA_ATAQUE) {
+                        Direccion.normalizeLocal();
+                        fisicas.setViewDirection(Direccion);
+                        fisicas.setWalkDirection(Direccion.mult(velocidad));
+                    } else {
+                        fisicas.setWalkDirection(Vector3f.ZERO);
+                        Direccion.normalizeLocal();
+                        fisicas.setViewDirection(Direccion);
+                        
+                        // Golpear al héroe
+                        if (app.getTiempoUltimoGolpe() >= Constantes.JUGADOR_TIEMPO_INVULNERABILIDAD) {
+                            app.recibirDanio(Constantes.ENEMIGO_DANIO_GOLPE);
+                            app.setTiempoUltimoGolpe(0f);
+                            System.out.println("¡Un enemigo te ha golpeado!");
+                        }
+                    }
+                }
             } else {
-                // Si ya llegaron al perímetro seguro de 4 metros, se detienen
-                fisiscasEnemigo.setWalkDirection(Vector3f.ZERO);
+                // MODO CENTINELA: Gira lentamente buscando al jugador
+                Float anguloActual = enemigo.getUserData("AnguloVigilancia");
+                if (anguloActual == null) anguloActual = 0f;
                 
-                // Opcional: Hacemos que, aunque estén detenidos, sigan girando para mirar 
-                // al jugador de forma segura 
-                if (DistanciaAlHeroe > 0.1f) {
-                    Direccion.normalizeLocal();
-                    fisiscasEnemigo.setViewDirection(Direccion);
+                anguloActual += Tpf * 1.5f; // Velocidad de rotación
+                if (anguloActual > FastMath.TWO_PI) anguloActual -= FastMath.TWO_PI;
+                
+                enemigo.setUserData("AnguloVigilancia", anguloActual);
+                
+                float x = FastMath.sin(anguloActual);
+                float z = FastMath.cos(anguloActual);
+                Vector3f direccionVigilancia = new Vector3f(x, 0, z).normalizeLocal();
+                
+                if(fisicas != null) {
+                    fisicas.setViewDirection(direccionVigilancia);
+                    fisicas.setWalkDirection(Vector3f.ZERO); // Cero físicas = Cero Lag
                 }
             }
         }
