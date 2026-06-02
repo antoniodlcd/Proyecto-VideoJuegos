@@ -295,6 +295,24 @@ public class Main extends SimpleApplication {
             }
         }
         
+        // --- SISTEMA DE CAÍDA ---
+        // Si el jugador cae por debajo de Y = -3.0 (el vacío)
+        if (NodoSoldado.getWorldTranslation().y < -3.0f) {
+            
+            // 1. Buscamos el punto de inicio para regresarlo
+            Spatial MarcadorInicio = EncontrarNodo(ModeloLaberinto, "PuntoInicio"); 
+            if (MarcadorInicio != null) {
+                Vector3f CoordenadaInicio = MarcadorInicio.getWorldTranslation().add(0, 1.5f, 0);
+                
+                // 2. Lo teletransportamos de vuelta a un lugar seguro
+                NodoSoldado.getControl(BetterCharacterControl.class).warp(CoordenadaInicio);
+                
+                // 3. Le cobramos 20 de vida como penalización por caerse
+                recibirDanio(20); 
+                System.out.println("¡Te caíste del mapa! Regresando al inicio...");
+            }
+        }
+        
     }
 
     @Override
