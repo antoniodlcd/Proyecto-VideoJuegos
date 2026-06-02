@@ -44,29 +44,42 @@ public class GestorOleadas {
         PoolDeSpawns.add(new Vector3f(-327.76f, 2.5f, 260.86f));
         PoolDeSpawns.add(new Vector3f(-338.89f, 2.5f, 185.40f));
         PoolDeSpawns.add(new Vector3f(-428.48f, 2.5f, 88.78f));
-        PoolDeSpawns.add(new Vector3f(81.34f, 2.5f, 375.94f));
-        PoolDeSpawns.add(new Vector3f(61.38f, 2.5f, 376.10f));
-        PoolDeSpawns.add(new Vector3f(-34.14f, 2.5f, 365.12f));
-        PoolDeSpawns.add(new Vector3f(9.02f, 2.5f, 327.24f));
-        PoolDeSpawns.add(new Vector3f(8.96f, 2.5f, 299.63f));
-        PoolDeSpawns.add(new Vector3f(11.69f, 2.5f, 256.12f));
-        PoolDeSpawns.add(new Vector3f(-11.32f, 2.5f, 189.30f));
-        PoolDeSpawns.add(new Vector3f(-37.26f, 2.5f, 189.49f));
-        PoolDeSpawns.add(new Vector3f(-115.77f, 2.5f, 189.68f));
-        PoolDeSpawns.add(new Vector3f(-183.30f, 2.5f, 189.78f));
-        PoolDeSpawns.add(new Vector3f(-245.50f, 2.5f, 189.87f));
-        PoolDeSpawns.add(new Vector3f(-310.40f, 2.5f, 207.74f));
-        PoolDeSpawns.add(new Vector3f(-332.54f, 2.5f, 256.98f));
-        PoolDeSpawns.add(new Vector3f(-430.20f, 2.5f, 138.00f));
-        PoolDeSpawns.add(new Vector3f(-430.01f, 2.5f, 154.30f));
-        PoolDeSpawns.add(new Vector3f(-408.95f, 2.5f, 173.48f));
-        PoolDeSpawns.add(new Vector3f(-393.44f, 2.5f, 147.26f));
-        PoolDeSpawns.add(new Vector3f(-364.94f, 2.5f, 151.61f));
-        PoolDeSpawns.add(new Vector3f(-366.67f, 2.5f, 164.38f));
-        PoolDeSpawns.add(new Vector3f(-359.94f, 2.5f, 147.52f));
-        PoolDeSpawns.add(new Vector3f(-362.96f, 2.5f, 123.32f));
-        PoolDeSpawns.add(new Vector3f(-371.98f, 2.5f, 125.55f));
-        PoolDeSpawns.add(new Vector3f(-452.20f, 2.5f, 327.21f));
+        PoolDeSpawns.add(new Vector3f(56.51f, 2.5f, 379.04f));
+        PoolDeSpawns.add(new Vector3f(29.43f, 2.5f, 379.08f));
+        PoolDeSpawns.add(new Vector3f(-32.06f, 2.5f, 363.50f));
+        PoolDeSpawns.add(new Vector3f(-13.41f, 2.5f, 346.52f));
+        PoolDeSpawns.add(new Vector3f(11.71f, 2.5f, 310.04f));
+        PoolDeSpawns.add(new Vector3f(18.16f, 2.5f, 250.95f));
+        PoolDeSpawns.add(new Vector3f(-337.60f, 2.5f, 183.64f));
+        PoolDeSpawns.add(new Vector3f(-337.05f, 2.5f, 64.89f));
+        PoolDeSpawns.add(new Vector3f(-426.03f, 2.5f, 88.13f));
+        PoolDeSpawns.add(new Vector3f(-449.81f, 2.5f, 203.55f));
+        PoolDeSpawns.add(new Vector3f(-449.34f, 2.5f, 14.93f));
+        PoolDeSpawns.add(new Vector3f(-450.90f, 2.5f, -156.66f));
+        PoolDeSpawns.add(new Vector3f(-422.98f, 2.5f, -227.84f));
+        PoolDeSpawns.add(new Vector3f(-366.32f, 2.5f, -228.53f));
+        PoolDeSpawns.add(new Vector3f(-260.63f, 2.5f, -226.27f));
+        PoolDeSpawns.add(new Vector3f(-218.63f, 2.5f, -184.14f));
+        PoolDeSpawns.add(new Vector3f(-295.65f, 2.5f, -133.27f));
+        PoolDeSpawns.add(new Vector3f(-382.10f, 2.5f, -94.77f));
+        PoolDeSpawns.add(new Vector3f(-341.02f, 2.5f, -17.91f));
+        PoolDeSpawns.add(new Vector3f(-269.45f, 2.5f, -16.18f));
+        PoolDeSpawns.add(new Vector3f(-242.96f, 2.5f, 99.66f));
+        PoolDeSpawns.add(new Vector3f(-196.59f, 2.5f, 119.16f));
+        PoolDeSpawns.add(new Vector3f(-58.53f, 2.5f, 51.11f));
+        PoolDeSpawns.add(new Vector3f(31.41f, 2.5f, -47.48f));
+        PoolDeSpawns.add(new Vector3f(-102.97f, 2.5f, -54.81f));
+        PoolDeSpawns.add(new Vector3f(-133.32f, 2.5f, 28.01f));
+        PoolDeSpawns.add(new Vector3f(-196.01f, 2.5f, -12.00f));
+        PoolDeSpawns.add(new Vector3f(-174.40f, 2.5f, -208.74f));
+        PoolDeSpawns.add(new Vector3f(-197.16f, 2.5f, -314.72f));
+        PoolDeSpawns.add(new Vector3f(-271.07f, 2.5f, -249.74f));
+        PoolDeSpawns.add(new Vector3f(-379.51f, 2.5f, -271.36f));
+        PoolDeSpawns.add(new Vector3f(-450.22f, 2.5f, -326.63f));
+        PoolDeSpawns.add(new Vector3f(-398.20f, 2.5f, -458.22f));
+        PoolDeSpawns.add(new Vector3f(-360.49f, 2.5f, -399.20f));
+        PoolDeSpawns.add(new Vector3f(-328.84f, 2.5f, -365.63f));
+        PoolDeSpawns.add(new Vector3f(-333.87f, 2.5f, -416.78f));
     }
 
     public void iniciarNuevaOleada() {
@@ -162,10 +175,17 @@ public class GestorOleadas {
         if (villanosRestantes <= 0) {
             if (oleadaActual >= Constantes.OLEADAS_PARA_GANAR) { 
                 
-                // Si implementaste el muro de escape, cambia esto por app.abrirSalida();
-                app.mostrarPantallaVictoria(); 
+                // --- LA SOLUCIÓN DEL MURO ---
+                // 1. En lugar de ganar automáticamente, abrimos la salida del laberinto.
+                app.abrirSalida(); 
+                
+                // 2. Iniciamos una oleada extra "infinita". 
+                // Esto obliga al jugador a correr por su vida hacia la salida 
+                // porque los enemigos seguirán apareciendo.
+                iniciarNuevaOleada(); 
                 
             } else {
+                // Si aún no llegamos a la ronda final, solo pasamos a la siguiente
                 iniciarNuevaOleada(); 
             }
         }

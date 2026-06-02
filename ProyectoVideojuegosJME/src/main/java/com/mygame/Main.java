@@ -283,7 +283,7 @@ public class Main extends SimpleApplication {
         camMinimapa.lookAtDirection(new Vector3f(0, -1, 0), new Vector3f(0, 0, -1));
         
         // --- VERIFICAR SI SE LLEGA A LA META ---
-        if (!juegoTerminado && MarcadorSalida != null) {
+        if (!juegoTerminado && MarcadorSalida != null && salidaAbierta) {
             float distanciaASalida = NodoSoldado.getWorldTranslation().distance(MarcadorSalida.getWorldTranslation());
             
             if (distanciaASalida < 10.0f) {
