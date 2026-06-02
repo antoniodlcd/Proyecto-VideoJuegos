@@ -44,7 +44,13 @@ public class Main extends SimpleApplication {
     // marcador de salida del laberinto
     private Spatial MarcadorSalida;
     private boolean juegoTerminado = false;
-
+    
+    private com.jme3.scene.Geometry muroSalida;
+    private com.jme3.bullet.control.RigidBodyControl fisicoMuro;
+    private boolean salidaAbierta = false;
+    
+    private boolean primerFotograma = true;
+    
     public static void main(String[] args) {
         Main Aplicacion = new Main();
         
@@ -116,8 +122,19 @@ public class Main extends SimpleApplication {
         
         if (MarcadorSalida != null) {
             System.out.println("Punto de salida detectado en: " + MarcadorSalida.getWorldTranslation());
+            
+            com.jme3.scene.shape.Box formaCaja = new com.jme3.scene.shape.Box(6f, 6f, 6f); 
+            muroSalida = new com.jme3.scene.Geometry("MuroSalida", formaCaja);
+            muroSalida.setLocalTranslation(MarcadorSalida.getWorldTranslation());
+            muroSalida.setCullHint(Spatial.CullHint.Always); 
+            
+            fisicoMuro = new com.jme3.bullet.control.RigidBodyControl(0.0f);
+            muroSalida.addControl(fisicoMuro);
+            
+            rootNode.attachChild(muroSalida);
+            EstadoFisicas.getPhysicsSpace().add(fisicoMuro);
         } else {
-            System.out.println("Error: No se enctonro 'PuntoFin' en el modelo del laberinto");
+            System.out.println("Error: No se encontro 'PuntoFin' en el modelo del laberinto");
         }
 
         // =====================================================================
@@ -141,16 +158,6 @@ public class Main extends SimpleApplication {
         EntradasJugador = new ManejoInputs();
         EntradasJugador.ConfigurarTeclado(inputManager);
         
-
-
-        if (MarcadorInicio != null) {
-            Vector3f CoordenadaInicio = MarcadorInicio.getWorldTranslation();
-            NodoSoldado.getControl(BetterCharacterControl.class).warp(CoordenadaInicio.add(0, 1.5f, 0)); // spawnear el soldado en el inicio
-            System.out.println("Personaje posicionado automaticamente en: " + CoordenadaInicio);
-        } else {
-            System.out.println("Error: No se encontro 'PuntoInicio', usando coordenadas por defecto");
-            NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0, 20 ,0));
-        }
         NodoSoldado.getControl(BetterCharacterControl.class).setViewDirection(new Vector3f(0, 0, -1));
 
         // --- Nueva Linterna Adaptada a la escala ---
@@ -197,9 +204,11 @@ public class Main extends SimpleApplication {
         vistaMinimapa.setClearFlags(true, true, true);
         vistaMinimapa.setBackgroundColor(new ColorRGBA(0.0f, 0.1f, 0.0f, 1f));
         vistaMinimapa.attachScene(rootNode);
-    
+        
+        inputManager.setCursorVisible(false);
+        cursorBloquedo = true;
     }
-    
+
 
     
 
@@ -216,10 +225,13 @@ public class Main extends SimpleApplication {
         }
     }
 
-   
-    //MÉTODO PARA MOSTRAR QUE GANASTE Y DETENER EL JUEGO
-    public void mostrarPantallaVictoria() {
-        juegoTerminado = true;
+    @Override
+    public void simpleUpdate(float Tpf) {
+        
+        if (primerFotograma) {
+            inputManager.setCursorVisible(false);
+            primerFotograma = false;
+        }
         
         // 1. Crear el texto de Victoria
         BitmapText textoVictoria = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
@@ -227,30 +239,15 @@ public class Main extends SimpleApplication {
         textoVictoria.setSize(40);
         textoVictoria.setColor(ColorRGBA.Green); // Color verde de éxito
         
-        // 2. Centrarlo en la pantalla
-        float x = (settings.getWidth() / 2f) - (textoVictoria.getLineWidth() / 2f);
-        float y = (settings.getHeight() / 2f) + (textoVictoria.getLineHeight() / 2f);
-        textoVictoria.setLocalTranslation(x, y, 0);
         
-        // 3. Pegarlo en el HUD
-        guiNode.attachChild(textoVictoria);
-        
-        // 4. Liberar el cursor para que el jugador pueda cerrar el juego cómodamente
-        inputManager.setCursorVisible(true);
-        cursorBloquedo = false; 
-        
-        speed=0;
-    }
-    
-    @Override
-    public void simpleUpdate(float Tpf) {
-        TpfActual = Tpf; // guardar el tiempo del fotograma
-        
+        TpfActual = Tpf; 
         tiempoUltimoGolpe += Tpf;
-        // ocultamos el cursor cuando la ventana ya existe
-        if (!cursorBloquedo) {
-            inputManager.setCursorVisible(false);
-            cursorBloquedo = true;
+        
+        if (juegoTerminado) {
+            if (EntradasJugador.getReiniciar()) {
+                reiniciarJuego();
+            }
+            return; 
         }
         
         // --- LÓGICA DE MOVIMIENTO ---
@@ -290,7 +287,6 @@ public class Main extends SimpleApplication {
             float distanciaASalida = NodoSoldado.getWorldTranslation().distance(MarcadorSalida.getWorldTranslation());
             
             if (distanciaASalida < 10.0f) {
-                juegoTerminado = true;
                 mostrarPantallaVictoria();
             }
         }
@@ -317,7 +313,7 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleRender(RenderManager rm) {
-            ControlCamara.ActualizarCamaraFisica(
+        ControlCamara.ActualizarCamaraFisica(
             cam, 
             NodoSoldado, 
             TpfActual, 
@@ -369,6 +365,8 @@ public class Main extends SimpleApplication {
             textoVida.setText("Vida: " + vidaJugador + "%");
             if (vidaJugador <= Constantes.JUGADOR_ALERTA_VIDA_BAJA) {
                 textoVida.setColor(ColorRGBA.Red);
+            } else {
+                textoVida.setColor(ColorRGBA.Green);
             }
         }
     }
@@ -386,7 +384,35 @@ public class Main extends SimpleApplication {
         }
     }
 
+    public void mostrarPantallaVictoria() {
+        juegoTerminado = true;
+        
+        BitmapText textoVictoria = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoVictoria.setText("¡VICTORIA! LABERINTO COMPLETADO");
+        textoVictoria.setSize(40);
+        textoVictoria.setColor(ColorRGBA.Green);
+        
+        float x = (settings.getWidth() / 2f) - (textoVictoria.getLineWidth() / 2f);
+        float y = (settings.getHeight() / 2f) + (textoVictoria.getLineHeight() / 2f);
+        textoVictoria.setLocalTranslation(x, y, 0);
+        guiNode.attachChild(textoVictoria);
+        
+        BitmapText textoReinicio = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoReinicio.setText("[ PRESIONA 'R' PARA JUGAR DE NUEVO ]");
+        textoReinicio.setSize(25);
+        textoReinicio.setColor(ColorRGBA.White);
+        float rx = (settings.getWidth() / 2f) - (textoReinicio.getLineWidth() / 2f);
+        textoReinicio.setLocalTranslation(rx, y - 60, 0);
+        guiNode.attachChild(textoReinicio);
+        
+        inputManager.setCursorVisible(true);
+        cursorBloquedo = false;
+        EstadoFisicas.setEnabled(false); 
+    }
+
     public void mostrarPantallaDerrota() {
+        juegoTerminado = true; 
+        
         BitmapText textoDerrota = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
         textoDerrota.setText("GAME OVER - TE HAN ELIMINADO");
         textoDerrota.setSize(40);
@@ -398,26 +424,80 @@ public class Main extends SimpleApplication {
         
         guiNode.attachChild(textoDerrota);
         
+        BitmapText textoReinicio = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+        textoReinicio.setText("[ PRESIONA 'R' PARA INTENTARLO OTRA VEZ ]");
+        textoReinicio.setSize(25);
+        textoReinicio.setColor(ColorRGBA.White);
+        float rx = (settings.getWidth() / 2f) - (textoReinicio.getLineWidth() / 2f);
+        textoReinicio.setLocalTranslation(rx, y - 60, 0);
+        guiNode.attachChild(textoReinicio);
+        
         inputManager.setCursorVisible(true);
         cursorBloquedo = false;
-        speed = 0; // Congelar juego al morir
+        EstadoFisicas.setEnabled(false); // Congelar juego al morir
+    }
+    
+    public void reiniciarJuego() {
+        System.out.println("Reiniciando el juego...");
+        
+        EstadoFisicas.setEnabled(true);
+        inputManager.setCursorVisible(false);
+        cursorBloquedo = true;
+        juegoTerminado = false;
+        
+        guiNode.detachAllChildren();
+        guiNode.attachChild(textoContador);
+        guiNode.attachChild(textoVida);
+        guiNode.attachChild(textoOleada);
+        ConfigurarMirilla();
+        
+        for (Spatial enemigo : gestorOleadas.getListaVillanos()) {
+            enemigo.removeFromParent();
+            BetterCharacterControl fisicasE = enemigo.getControl(BetterCharacterControl.class);
+            if (fisicasE != null) {
+                EstadoFisicas.getPhysicsSpace().remove(fisicasE);
+            }
+        }
+        
+        vidaJugador = Constantes.JUGADOR_VIDA_INICIAL;
+        actualizarTextoVida();
+        tiempoUltimoGolpe = -Constantes.JUGADOR_TIEMPO_INVULNERABILIDAD;
+        
+        Spatial MarcadorInicio = EncontrarNodo(ModeloLaberinto, "PuntoInicio"); 
+        if (MarcadorInicio != null) {
+            NodoSoldado.getControl(BetterCharacterControl.class).warp(MarcadorInicio.getWorldTranslation().add(0, 1.5f, 0));
+        } else {
+            NodoSoldado.getControl(BetterCharacterControl.class).warp(new Vector3f(0, 20 ,0));
+        }
+        
+        gestorOleadas = new GestorOleadas(this, ModeloLaberinto);
+        gestorOleadas.iniciarNuevaOleada();
+    }
+    
+    public void abrirSalida() {
+        if (!salidaAbierta) {
+            salidaAbierta = true;
+            
+            if (muroSalida != null) {
+                muroSalida.removeFromParent();
+                EstadoFisicas.getPhysicsSpace().remove(fisicoMuro);
+            }
+            
+            BitmapText textoAlerta = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"));
+            textoAlerta.setText("¡LA SALIDA SE HA DESBLOQUEADO! ¡ESCAPA!");
+            textoAlerta.setSize(35);
+            textoAlerta.setColor(ColorRGBA.Yellow);
+            
+            float centroX = (settings.getWidth() / 2f) - (textoAlerta.getLineWidth() / 2f);
+            textoAlerta.setLocalTranslation(centroX, settings.getHeight() - 150, 0);
+            guiNode.attachChild(textoAlerta);
+            
+            System.out.println("Muro invisible destruido. El jugador ya puede escapar.");
+        }
     }
 
-    // GETTERS Y SETTERS PARA LA IA
-    public float getTiempoUltimoGolpe() { 
-        return tiempoUltimoGolpe; 
-    }
-    
-    public void setTiempoUltimoGolpe(float tiempo) { 
-        this.tiempoUltimoGolpe = tiempo; 
-    }
-    
-    public BulletAppState getEstadoFisicas() {
-        return EstadoFisicas;
-    }
-    
-    public GestorOleadas getGestorOleadas() {
-        return gestorOleadas;
-    }
-
+    public float getTiempoUltimoGolpe() { return tiempoUltimoGolpe; }
+    public void setTiempoUltimoGolpe(float tiempo) { this.tiempoUltimoGolpe = tiempo; }
+    public BulletAppState getEstadoFisicas() { return EstadoFisicas; }
+    public GestorOleadas getGestorOleadas() { return gestorOleadas; }
 }

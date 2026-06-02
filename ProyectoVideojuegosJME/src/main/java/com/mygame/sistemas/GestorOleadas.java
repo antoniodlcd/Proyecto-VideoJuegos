@@ -11,7 +11,7 @@ import java.util.Collections;
 
 public class GestorOleadas {
 
-    private Main app; // Referencia al juego principal
+    private Main app; 
     private int oleadaActual = 0;
     private int villanosRestantes = 0;
     private ArrayList<Spatial> ListaVillanos = new ArrayList<>();
@@ -21,11 +21,15 @@ public class GestorOleadas {
         this.app = app;
         
         this.PoolDeSpawns.clear();
+        
+        // 1. Escaneamos las cruces del mapa de Blender
         escanearSpawnsEnMapa(modeloLaberinto);
         
+        // 2. Cargamos también las 33 coordenadas manuales para usar ambas
+        cargarSpawns();
+        
         if (PoolDeSpawns.isEmpty()) {
-            System.out.println("No se encontraron nodos 'Spawn_' en el mapa");
-            cargarSpawns();
+            System.out.println("Error crítico: No hay puntos de aparición cargados.");
         }
     }
 
@@ -74,11 +78,12 @@ public class GestorOleadas {
         Spatial modeloAraniaBase = app.getAssetManager().loadModel("Models/arania.j3o");
         Spatial modeloTanqueBase = app.getAssetManager().loadModel("Models/En_Tanque.j3o");
         
-Collections.shuffle(PoolDeSpawns); 
+        Collections.shuffle(PoolDeSpawns); 
 
         for (int i = 0; i < enemigosAInstanciar; i++) {
             Node NodoEnemigo = new Node(); 
             Spatial visualEnemigo;
+            
             if (i % 2 == 0) {
                 visualEnemigo = modeloAraniaBase.clone();
                 NodoEnemigo.setName("Arania");
@@ -90,6 +95,19 @@ Collections.shuffle(PoolDeSpawns);
             }
 
             NodoEnemigo.attachChild(visualEnemigo);
+            
+            // ==========================================================
+            // MARCADOR VISUAL Y RADAR (Esfera Roja)
+            // ==========================================================
+            com.jme3.scene.shape.Sphere formaMarcador = new com.jme3.scene.shape.Sphere(10, 10, 0.4f);
+            com.jme3.scene.Geometry marcadorVisual = new com.jme3.scene.Geometry("MarcadorEnemigo", formaMarcador);
+            marcadorVisual.setLocalTranslation(0, 3.5f, 0); 
+            com.jme3.material.Material matMarcador = new com.jme3.material.Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+            matMarcador.setColor("Color", com.jme3.math.ColorRGBA.Red); 
+            marcadorVisual.setMaterial(matMarcador);
+            NodoEnemigo.attachChild(marcadorVisual);
+            // ==========================================================
+
             NodoEnemigo.setUserData("Vida", Constantes.OLEADA_VIDA_BASE + (oleadaActual * Constantes.OLEADA_VIDA_AUMENTO)); 
             
             BetterCharacterControl fisicasE = new BetterCharacterControl(0.8f, 2.5f, 40f);
@@ -114,7 +132,7 @@ Collections.shuffle(PoolDeSpawns);
             
             // 2. Aplicamos el desplazamiento físico para que no exploten al nacer
             if (i % 2 == 0) {
-                // Las Arañas aparecen 1.5 metros a la derecha del punto central
+                 // Las Arañas aparecen 1.5 metros a la derecha del punto central
                 PuntoBase.addLocal(1.5f, 0, 0);
             } else {
                 // Los Tanques aparecen 1.5 metros a la izquierda del punto central
@@ -125,6 +143,7 @@ Collections.shuffle(PoolDeSpawns);
             fisicasE.warp(PuntoBase);
             
             ListaVillanos.add(NodoEnemigo); 
+            // ==========================================================
         }
         
         villanosRestantes = ListaVillanos.size();
@@ -142,7 +161,10 @@ Collections.shuffle(PoolDeSpawns);
         
         if (villanosRestantes <= 0) {
             if (oleadaActual >= Constantes.OLEADAS_PARA_GANAR) { 
-                app.mostrarPantallaVictoria();
+                
+                // Si implementaste el muro de escape, cambia esto por app.abrirSalida();
+                app.mostrarPantallaVictoria(); 
+                
             } else {
                 iniciarNuevaOleada(); 
             }
@@ -162,7 +184,7 @@ Collections.shuffle(PoolDeSpawns);
             }
         }
     }
-
+    
     // Getters para que otras clases puedan consultar el estado
     public ArrayList<Spatial> getListaVillanos() {
         return ListaVillanos;
